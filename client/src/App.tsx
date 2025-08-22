@@ -25,6 +25,13 @@ const AdvancedAssessment = lazy(() => import("./pages/advanced-assessment"));
 const LMSIntegration = lazy(() => import("./pages/lms-integration"));
 const UserManagement = lazy(() => import("./pages/user-management"));
 
+// Lazy load Stage 4 AI components
+const AIContentGeneration = lazy(() => import("./pages/ai-content-generation"));
+const IntelligentTutoring = lazy(() => import("./pages/intelligent-tutoring"));
+const AutomatedGrading = lazy(() => import("./pages/automated-grading"));
+const SmartRecommendations = lazy(() => import("./pages/smart-recommendations"));
+const PredictiveAnalytics = lazy(() => import("./pages/predictive-analytics"));
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -128,6 +135,31 @@ function Router() {
       <Route path="/user-management">
         <ProtectedRoute>
           <UserManagement />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/ai-content-generation">
+        <ProtectedRoute>
+          <AIContentGeneration />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/intelligent-tutoring">
+        <ProtectedRoute>
+          <IntelligentTutoring />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/automated-grading">
+        <ProtectedRoute>
+          <AutomatedGrading />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/smart-recommendations">
+        <ProtectedRoute>
+          <SmartRecommendations />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/predictive-analytics">
+        <ProtectedRoute>
+          <PredictiveAnalytics />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />

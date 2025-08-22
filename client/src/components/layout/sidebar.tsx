@@ -18,7 +18,11 @@ import {
   FileCheck,
   Link2,
   Shield,
-  School
+  School,
+  Sparkles,
+  Brain,
+  Zap,
+  Target
 } from "lucide-react";
 
 // Student navigation
@@ -29,6 +33,7 @@ const studentNavigation = [
   { name: "Progress", href: "/progress", icon: TrendingUp },
   { name: "Mock Interviews", href: "/interviews", icon: Mic },
   { name: "AI Interview", href: "/ai-interview", icon: Bot },
+  { name: "Intelligent Tutoring", href: "/intelligent-tutoring", icon: Brain },
   { name: "Collaboration", href: "/collaboration", icon: UserCheck },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Study Groups", href: "/study-groups", icon: Users },
@@ -39,11 +44,14 @@ const professorNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Course Management", href: "/course-management", icon: BookOpen },
   { name: "Advanced Assessment", href: "/advanced-assessment", icon: FileCheck },
+  { name: "AI Content Generation", href: "/ai-content-generation", icon: Sparkles },
+  { name: "Intelligent Tutoring", href: "/intelligent-tutoring", icon: Brain },
+  { name: "Automated Grading", href: "/automated-grading", icon: Zap },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Collaboration", href: "/collaboration", icon: UserCheck },
 ];
 
-// Admin navigation
+// Admin navigation  
 const adminNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Institutional Analytics", href: "/institutional-analytics", icon: School },
@@ -51,6 +59,11 @@ const adminNavigation = [
   { name: "User Management", href: "/user-management", icon: Shield },
   { name: "Course Management", href: "/course-management", icon: BookOpen },
   { name: "Advanced Assessment", href: "/advanced-assessment", icon: FileCheck },
+  { name: "AI Content Generation", href: "/ai-content-generation", icon: Sparkles },
+  { name: "Intelligent Tutoring", href: "/intelligent-tutoring", icon: Brain },
+  { name: "Automated Grading", href: "/automated-grading", icon: Zap },
+  { name: "Smart Recommendations", href: "/smart-recommendations", icon: Target },
+  { name: "Predictive Analytics", href: "/predictive-analytics", icon: Brain },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
 ];
 
