@@ -11,6 +11,23 @@ interface CodeEditorProps {
 export function CodeEditor({ value, onChange, language, height = "100%" }: CodeEditorProps) {
   const editorRef = useRef<any>(null);
 
+  // Suppress ResizeObserver errors which are harmless but annoying
+  useEffect(() => {
+    const errorHandler = (e: ErrorEvent) => {
+      if (e.message?.includes('ResizeObserver')) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        return false;
+      }
+    };
+    
+    window.addEventListener('error', errorHandler, true);
+    
+    return () => {
+      window.removeEventListener('error', errorHandler, true);
+    };
+  }, []);
+
   // Map our language names to Monaco language identifiers
   const getMonacoLanguage = (lang: string): string => {
     const languageMap: { [key: string]: string } = {
