@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
-import { MonacoEditor } from "@/components/code/monaco-editor";
+import { SimpleCodeEditor } from "@/components/code/simple-code-editor";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
@@ -301,9 +301,9 @@ export default function CodeEditor() {
 
           {/* Code Editor & Results */}
           <div className="w-1/2 flex flex-col">
-            {/* Monaco Editor */}
+            {/* Code Editor */}
             <div className="flex-1">
-              <MonacoEditor
+              <SimpleCodeEditor
                 value={code}
                 onChange={setCode}
                 language={language}
