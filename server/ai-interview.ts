@@ -394,22 +394,26 @@ Provide a detailed analysis with specific strengths, weaknesses, and actionable 
 
   private async generateQuestion(type: 'technical' | 'behavioral' | 'system_design', questionIndex: number, feedback: any): Promise<Question> {
     try {
+      // Build context string safely
+      let contextString = 'No previous questions';
+      if (feedback?.questions && Array.isArray(feedback.questions)) {
+        contextString = feedback.questions.map((q: any, i: number) => {
+          const questionText = 'Previous question';
+          const scoreText = q.scores ? 'Average score available' : 'No score yet';
+          return `Q${i + 1}: ${questionText} - ${scoreText}`;
+        }).join('\n');
+      }
+
       // Use OpenAI to generate dynamic questions based on context
-      const questionPrompt = `
-Generate a ${type} interview question for a software engineering interview.
+      const questionPrompt = `Generate a ${type} interview question for a software engineering interview.
 
 Question Context:
 - Question Type: ${type}
 - Question Number: ${questionIndex + 1}
 - Difficulty Level: ${questionIndex < 2 ? 'easy' : questionIndex < 4 ? 'medium' : 'hard'}
 
-Previous questions and responses context:
-${feedback.questions ? feedback.questions.map((q: any, i: number) => {
-  const foundQuestion = this.questionBank.find(qb => qb.id === q.questionId);
-  const avgScore = q.scores ? Object.values(q.scores as any).reduce((a: any, b: any) => a + b, 0) / 4 : 'N/A';
-  return `Q${i + 1}: ${foundQuestion?.question || 'Previous question'}
-Response Quality: ${avgScore}/100`;
-}).join('\n') : 'No previous questions'}
+Previous questions context:
+${contextString}
 
 Generate a unique, relevant question that builds upon the conversation. Include follow-up questions and evaluation criteria.
 
