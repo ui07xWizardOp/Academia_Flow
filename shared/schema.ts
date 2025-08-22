@@ -19,9 +19,16 @@ export const problems = pgTable("problems", {
   description: text("description").notNull(),
   difficulty: varchar("difficulty", { length: 20 }).notNull(), // easy, medium, hard
   topics: text("topics").array().notNull(), // array of topic strings
-  starterCode: jsonb("starter_code").notNull(), // {python: "code", javascript: "code", etc}
-  testCases: jsonb("test_cases").notNull(), // array of test case objects
+  starterCode: jsonb("starter_code"), // {python: "code", javascript: "code", etc}
+  testCases: jsonb("test_cases"), // array of test case objects
   solution: jsonb("solution"), // optional reference solution
+  // LeetCode integration fields
+  leetcodeId: integer("leetcode_id"),
+  companies: text("companies").array().default(sql`ARRAY[]::text[]`), // companies that ask this problem
+  acceptanceRate: integer("acceptance_rate").default(0), // percentage acceptance rate
+  premium: boolean("premium").default(false),
+  examples: jsonb("examples"), // problem examples
+  constraints: text("constraints").array(), // problem constraints
   createdAt: timestamp("created_at").default(sql`now()`).notNull(),
   createdBy: integer("created_by").references(() => users.id),
 });

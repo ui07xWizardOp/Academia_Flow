@@ -7,12 +7,16 @@ import { ProblemCard } from "@/components/problems/problem-card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { AlertCircle, Building2, Search, Filter } from "lucide-react";
 
 export default function Problems() {
   const [, setLocation] = useLocation();
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
   const [topicFilter, setTopicFilter] = useState<string>("all");
+  const [companyFilter, setCompanyFilter] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const { data: problems = [], isLoading, error } = useQuery<Problem[]>({
     queryKey: ['/api/problems'],
@@ -23,13 +27,18 @@ export default function Problems() {
   };
 
   const filteredProblems = problems.filter((problem) => {
+    const matchesSearch = searchTerm === "" || 
+      problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      problem.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDifficulty = difficultyFilter === "all" || problem.difficulty === difficultyFilter;
     const matchesTopic = topicFilter === "all" || problem.topics.includes(topicFilter);
-    return matchesDifficulty && matchesTopic;
+    const matchesCompany = companyFilter === "all" || (problem.companies || []).includes(companyFilter);
+    return matchesSearch && matchesDifficulty && matchesTopic && matchesCompany;
   });
 
-  // Get unique topics for filter
+  // Get unique values for filters
   const allTopics = Array.from(new Set(problems.flatMap((p) => p.topics)));
+  const allCompanies = Array.from(new Set(problems.flatMap((p) => p.companies || []))).filter(Boolean).sort();
 
   if (isLoading) {
     return (
@@ -76,7 +85,19 @@ export default function Problems() {
               <h1 className="text-2xl font-bold text-gray-900">Problem Library</h1>
               <p className="text-gray-600 mt-1">Practice coding problems to improve your skills.</p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search problems..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-64"
+                  data-testid="input-search-problems"
+                />
+              </div>
+              
               <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
                 <SelectTrigger className="w-40" data-testid="select-difficulty">
                   <SelectValue placeholder="All Difficulties" />
@@ -102,6 +123,20 @@ export default function Problems() {
                   ))}
                 </SelectContent>
               </Select>
+
+              <Select value={companyFilter} onValueChange={setCompanyFilter}>
+                <SelectTrigger className="w-40" data-testid="select-company">
+                  <SelectValue placeholder="All Companies" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Companies</SelectItem>
+                  {allCompanies.map((company) => (
+                    <SelectItem key={company} value={company}>
+                      {company}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -120,12 +155,14 @@ export default function Problems() {
                       : "Try adjusting your filters to see more problems."
                     }
                   </p>
-                  {difficultyFilter !== "all" || topicFilter !== "all" ? (
+                  {difficultyFilter !== "all" || topicFilter !== "all" || companyFilter !== "all" || searchTerm !== "" ? (
                     <Button 
                       variant="outline" 
                       onClick={() => {
                         setDifficultyFilter("all");
                         setTopicFilter("all");
+                        setCompanyFilter("all");
+                        setSearchTerm("");
                       }}
                       data-testid="button-clear-filters"
                     >
@@ -145,6 +182,10 @@ export default function Problems() {
                   description={problem.description}
                   difficulty={problem.difficulty as "easy" | "medium" | "hard"}
                   topics={problem.topics}
+                  companies={problem.companies || []}
+                  leetcodeId={problem.leetcodeId}
+                  acceptanceRate={problem.acceptanceRate}
+                  premium={problem.premium}
                   onSolve={handleSolveProblem}
                 />
               ))}
