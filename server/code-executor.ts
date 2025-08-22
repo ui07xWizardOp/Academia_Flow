@@ -294,7 +294,9 @@ export class CodeExecutor {
       
       // Check if output matches expected
       const actualOutput = result.stdout.trim();
-      const expectedOutput = testCase.expectedOutput.trim();
+      const expectedOutput = testCase.expectedOutput && typeof testCase.expectedOutput === 'string' 
+        ? testCase.expectedOutput.trim() 
+        : String(testCase.expectedOutput || "");
       const passed = actualOutput === expectedOutput && result.exitCode === 0;
 
       if (passed) passedTests++;

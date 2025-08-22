@@ -215,14 +215,16 @@ export default function CodeEditorPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-gray-900">
       <Sidebar />
       
-      <div className="flex-1 flex flex-col">
-        {/* Problem Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200 p-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
+      {/* Main Content */}
+      <div className="flex-1 flex">
+        {/* Left Panel - Problem Statement */}
+        <div className="w-1/2 bg-white flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div className="flex items-center space-x-3">
               <Button
                 variant="ghost"
                 size="sm"
@@ -231,140 +233,170 @@ export default function CodeEditorPage() {
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900" data-testid="problem-title">
-                  {problem.title}
-                </h1>
-                <div className="flex items-center space-x-2 mt-1">
-                  <Badge 
-                    className={
-                      problem.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
-                      problem.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }
-                  >
-                    {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
-                  </Badge>
-                  <span className="text-sm text-gray-500">
-                    {problem.topics.join(", ")}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger className="w-32" data-testid="select-language">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="python">Python</SelectItem>
-                  <SelectItem value="javascript">JavaScript</SelectItem>
-                  <SelectItem value="java">Java</SelectItem>
-                  <SelectItem value="cpp">C++</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                onClick={handleRunCode}
-                disabled={runCodeMutation.isPending}
-                className="bg-success-600 text-white hover:bg-success-700 border-success-600"
-                data-testid="button-run-code"
+              <h1 className="text-lg font-semibold text-gray-900" data-testid="problem-title">
+                {problem.title}
+              </h1>
+              <Badge 
+                className={
+                  problem.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
+                  problem.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }
               >
-                <Play className="w-4 h-4 mr-2" />
-                {runCodeMutation.isPending ? "Running..." : "Run Code"}
-              </Button>
-              <Button
-                onClick={handleSubmitCode}
-                disabled={submitCodeMutation.isPending}
-                data-testid="button-submit-code"
-              >
-                <Send className="w-4 h-4 mr-2" />
-                {submitCodeMutation.isPending ? "Submitting..." : "Submit"}
-              </Button>
+                {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
+              </Badge>
             </div>
           </div>
-        </div>
 
-        {/* Editor Layout */}
-        <div className="flex-1 flex">
-          {/* Problem Description */}
-          <div className="w-1/2 bg-white border-r border-gray-200 overflow-auto">
-            <div className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Problem Description</h2>
+          {/* Tabs */}
+          <Tabs defaultValue="statement" className="flex-1 flex flex-col">
+            <TabsList className="justify-start rounded-none bg-gray-50 border-b">
+              <TabsTrigger value="statement" className="rounded-none">Statement</TabsTrigger>
+              <TabsTrigger value="submissions" className="rounded-none">Submissions</TabsTrigger>
+              <TabsTrigger value="help" className="rounded-none">AI Help</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="statement" className="flex-1 p-6 overflow-auto">
               <div 
                 className="prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{ __html: problem.description }}
                 data-testid="problem-description"
               />
+              
+              {/* Topic Tags */}
+              <div className="mt-6">
+                <div className="flex flex-wrap gap-2">
+                  {problem.topics.map((topic, index) => (
+                    <span 
+                      key={index}
+                      className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-sm"
+                    >
+                      {topic}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="submissions" className="flex-1 p-6">
+              <p className="text-sm text-gray-500">Your submission history will appear here.</p>
+            </TabsContent>
+            
+            <TabsContent value="help" className="flex-1 p-6">
+              <p className="text-sm text-gray-500">AI assistance features coming soon.</p>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Right Panel - Code Editor */}
+        <div className="w-1/2 flex flex-col bg-gray-900">
+          {/* Language Selector */}
+          <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-300">Language:</span>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger className="w-28 h-8 text-sm bg-gray-700 border-gray-600 text-white" data-testid="select-language">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectItem value="python" className="text-white hover:bg-gray-600">Python</SelectItem>
+                  <SelectItem value="javascript" className="text-white hover:bg-gray-600">JavaScript</SelectItem>
+                  <SelectItem value="java" className="text-white hover:bg-gray-600">Java</SelectItem>
+                  <SelectItem value="cpp" className="text-white hover:bg-gray-600">C++</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="text-xs text-gray-400">
+              Ctrl+Enter to run
             </div>
           </div>
 
-          {/* Code Editor & Results */}
-          <div className="w-1/2 flex flex-col">
-            {/* Code Editor */}
-            <div className="flex-1">
-              <CodeEditor
-                value={code}
-                onChange={setCode}
-                language={language}
-                height="100%"
-              />
-            </div>
+          {/* Code Editor */}
+          <div className="flex-1">
+            <CodeEditor
+              value={code}
+              onChange={setCode}
+              language={language}
+              height="100%"
+            />
+          </div>
 
-            {/* Results Panel */}
-            <div className="h-48 bg-white border-t border-gray-200 overflow-auto">
-              <div className="p-4">
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-gray-900">Test Results</h3>
-                    <TabsList>
-                      <TabsTrigger value="console" data-testid="tab-console">Console</TabsTrigger>
-                      <TabsTrigger value="test-cases" data-testid="tab-test-cases">Test Cases</TabsTrigger>
-                    </TabsList>
-                  </div>
-                  
-                  <TabsContent value="console">
-                    {testResults ? (
-                      <div className="space-y-2" data-testid="test-results">
-                        {testResults.stdout && (
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">Output:</p>
-                            <pre className="text-sm bg-gray-100 p-2 rounded mt-1">{testResults.stdout}</pre>
-                          </div>
-                        )}
-                        {testResults.stderr && (
-                          <div>
-                            <p className="text-sm font-medium text-red-700">Error:</p>
-                            <pre className="text-sm bg-red-50 p-2 rounded mt-1 text-red-700">{testResults.stderr}</pre>
-                          </div>
-                        )}
-                        <div className="text-sm text-gray-600 mt-4">
-                          <p><strong>Runtime:</strong> {testResults.runtime}ms</p>
-                          <p><strong>Memory:</strong> {(testResults.memory / 1024).toFixed(1)} MB</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">Run your code to see results here.</p>
-                    )}
-                  </TabsContent>
-                  
-                  <TabsContent value="test-cases">
-                    {problem.testCases ? (
-                      <div className="space-y-2">
-                        {(problem.testCases as any[]).slice(0, 3).map((testCase, index: number) => (
-                          <div key={index} className="flex items-center space-x-2 text-sm">
-                            <CheckCircle className="w-4 h-4 text-success-500" />
-                            <span>Test case {index + 1}: Passed</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">No test cases available.</p>
-                    )}
-                  </TabsContent>
-                </Tabs>
+          {/* Test Results Area */}
+          <div className="h-48 bg-gray-800 border-t border-gray-700">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+              <div className="flex items-center justify-between p-3 border-b border-gray-700">
+                <TabsList className="bg-gray-700">
+                  <TabsTrigger value="console" className="text-xs" data-testid="tab-console">Console</TabsTrigger>
+                  <TabsTrigger value="test-cases" className="text-xs" data-testid="tab-test-cases">Test Cases</TabsTrigger>
+                </TabsList>
               </div>
-            </div>
+              
+              <div className="flex-1 overflow-auto">
+                <TabsContent value="console" className="h-full p-3">
+                  {testResults ? (
+                    <div className="space-y-2 text-xs" data-testid="test-results">
+                      {testResults.stdout && (
+                        <div>
+                          <p className="font-medium text-green-400">Output:</p>
+                          <pre className="bg-gray-900 p-2 rounded text-gray-300 overflow-x-auto">{testResults.stdout}</pre>
+                        </div>
+                      )}
+                      {testResults.stderr && (
+                        <div>
+                          <p className="font-medium text-red-400">Error:</p>
+                          <pre className="bg-red-900/20 p-2 rounded text-red-300 overflow-x-auto">{testResults.stderr}</pre>
+                        </div>
+                      )}
+                      <div className="text-gray-400">
+                        <p>Runtime: {testResults.runtime}ms | Memory: {(testResults.memory / 1024).toFixed(1)} MB</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500">Run your code to see results here.</p>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="test-cases" className="h-full p-3">
+                  {problem.testCases ? (
+                    <div className="space-y-1">
+                      {(problem.testCases as any[]).slice(0, 3).map((testCase, index: number) => (
+                        <div key={index} className="flex items-center space-x-2 text-xs text-gray-300">
+                          <CheckCircle className="w-3 h-3 text-green-400" />
+                          <span>Test case {index + 1}: Ready</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500">No test cases available.</p>
+                  )}
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
+
+          {/* Action Buttons - Bottom */}
+          <div className="flex items-center justify-end space-x-2 p-3 bg-gray-800 border-t border-gray-700">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRunCode}
+              disabled={runCodeMutation.isPending}
+              className="bg-gray-700 text-gray-300 hover:bg-gray-600 border-gray-600"
+              data-testid="button-run-code"
+            >
+              <Play className="w-3 h-3 mr-1" />
+              {runCodeMutation.isPending ? "Running..." : "Run"}
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSubmitCode}
+              disabled={submitCodeMutation.isPending}
+              className="bg-green-600 hover:bg-green-700 text-white"
+              data-testid="button-submit-code"
+            >
+              <Send className="w-3 h-3 mr-1" />
+              {submitCodeMutation.isPending ? "Submitting..." : "Submit"}
+            </Button>
           </div>
         </div>
       </div>
