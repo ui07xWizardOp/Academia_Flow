@@ -16,6 +16,14 @@ import Settings from "@/pages/settings";
 import AIInterview from "@/pages/ai-interview";
 import Collaboration from "@/pages/collaboration";
 import Analytics from "@/pages/analytics";
+import { lazy } from "react";
+
+// Lazy load Stage 3 enterprise components
+const CourseManagement = lazy(() => import("./pages/course-management"));
+const InstitutionalAnalytics = lazy(() => import("./pages/institutional-analytics"));
+const AdvancedAssessment = lazy(() => import("./pages/advanced-assessment"));
+const LMSIntegration = lazy(() => import("./pages/lms-integration"));
+const UserManagement = lazy(() => import("./pages/user-management"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -95,6 +103,31 @@ function Router() {
       <Route path="/analytics">
         <ProtectedRoute>
           <Analytics />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/course-management">
+        <ProtectedRoute>
+          <CourseManagement />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/institutional-analytics">
+        <ProtectedRoute>
+          <InstitutionalAnalytics />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/advanced-assessment">
+        <ProtectedRoute>
+          <AdvancedAssessment />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/lms-integration">
+        <ProtectedRoute>
+          <LMSIntegration />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/user-management">
+        <ProtectedRoute>
+          <UserManagement />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />

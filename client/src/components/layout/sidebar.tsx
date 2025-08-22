@@ -13,10 +13,16 @@ import {
   LogOut,
   Bot,
   UserCheck,
-  BarChart3
+  BarChart3,
+  BookOpen,
+  FileCheck,
+  Link2,
+  Shield,
+  School
 } from "lucide-react";
 
-const navigation = [
+// Student navigation
+const studentNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Problems", href: "/problems", icon: List },
   { name: "Code Editor", href: "/code-editor", icon: Code },
@@ -26,6 +32,26 @@ const navigation = [
   { name: "Collaboration", href: "/collaboration", icon: UserCheck },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Study Groups", href: "/study-groups", icon: Users },
+];
+
+// Professor navigation
+const professorNavigation = [
+  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Course Management", href: "/course-management", icon: BookOpen },
+  { name: "Advanced Assessment", href: "/advanced-assessment", icon: FileCheck },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Collaboration", href: "/collaboration", icon: UserCheck },
+];
+
+// Admin navigation
+const adminNavigation = [
+  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Institutional Analytics", href: "/institutional-analytics", icon: School },
+  { name: "LMS Integration", href: "/lms-integration", icon: Link2 },
+  { name: "User Management", href: "/user-management", icon: Shield },
+  { name: "Course Management", href: "/course-management", icon: BookOpen },
+  { name: "Advanced Assessment", href: "/advanced-assessment", icon: FileCheck },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
 ];
 
 export function Sidebar() {
@@ -77,7 +103,11 @@ export function Sidebar() {
       {/* Navigation Menu */}
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
-          {navigation.map((item) => {
+          {(
+            user?.role === 'admin' ? adminNavigation :
+            user?.role === 'professor' ? professorNavigation :
+            studentNavigation
+          ).map((item) => {
             const isActive = location === item.href;
             const Icon = item.icon;
             

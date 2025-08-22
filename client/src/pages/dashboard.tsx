@@ -43,7 +43,7 @@ export default function Dashboard() {
   });
 
   // Fetch AI-powered recommendations
-  const { data: recommendations = [], isLoading: recommendationsLoading } = useQuery({
+  const { data: recommendations = [], isLoading: recommendationsLoading } = useQuery<any[]>({
     queryKey: ['/api/recommendations/user', user?.id],
     enabled: !!user?.id,
   });
