@@ -292,11 +292,12 @@ export class CodeExecutor {
 
       const result = await this.executeCode(modifiedRequest);
       
-      // Check if output matches expected
+      // Check if output matches expected (handle both 'expected' and 'expectedOutput' keys)
       const actualOutput = result.stdout.trim();
-      const expectedOutput = testCase.expectedOutput && typeof testCase.expectedOutput === 'string' 
-        ? testCase.expectedOutput.trim() 
-        : String(testCase.expectedOutput || "");
+      const expectedValue = (testCase as any).expectedOutput || (testCase as any).expected;
+      const expectedOutput = expectedValue && typeof expectedValue === 'string' 
+        ? expectedValue.trim() 
+        : String(expectedValue || "");
       const passed = actualOutput === expectedOutput && result.exitCode === 0;
 
       if (passed) passedTests++;

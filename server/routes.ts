@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { initializeCollaboration } from "./real-time-collaboration";
 import { storage } from "./storage";
 import { codeExecutor } from "./code-executor";
 import bcrypt from "bcryptjs";
@@ -325,6 +326,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Interview System Routes
+  app.post("/api/interviews/ai/start", authenticateToken, async (req: any, res) => {
+    try {
+      const { type } = req.body; // 'technical', 'behavioral', or 'mixed'
+      const { aiInterviewer } = await import("./ai-interview");
+      
+      const session = await aiInterviewer.startInterview(req.user.id, type);
+      res.json(session);
+    } catch (error) {
+      console.error('AI interview start error:', error);
+      res.status(500).json({ message: "Failed to start AI interview" });
+    }
+  });
+
+  app.post("/api/interviews/ai/:sessionId/question", authenticateToken, async (req: any, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const { userResponse } = req.body;
+      const { aiInterviewer } = await import("./ai-interview");
+      
+      const response = await aiInterviewer.getNextQuestion(sessionId, userResponse);
+      res.json(response);
+    } catch (error) {
+      console.error('AI interview question error:', error);
+      res.status(500).json({ message: "Failed to get next question" });
+    }
+  });
+
+  app.post("/api/interviews/ai/:sessionId/complete", authenticateToken, async (req: any, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const { finalResponse } = req.body;
+      const { aiInterviewer } = await import("./ai-interview");
+      
+      const analysis = await aiInterviewer.completeInterview(sessionId, finalResponse);
+      res.json(analysis);
+    } catch (error) {
+      console.error('AI interview completion error:', error);
+      res.status(500).json({ message: "Failed to complete interview" });
+    }
+  });
+
+  app.get("/api/interviews/ai/insights/:userId", authenticateToken, async (req: any, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Users can only view their own insights unless they're professors/admins
+      if (req.user.id !== userId && req.user.role === 'student') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { aiInterviewer } = await import("./ai-interview");
+      const insights = await aiInterviewer.getInterviewInsights(userId);
+      res.json(insights);
+    } catch (error) {
+      console.error('Interview insights error:', error);
+      res.status(500).json({ message: "Failed to get interview insights" });
+    }
+  });
+
   // Code execution route
   app.post("/api/code/execute", authenticateToken, async (req: any, res) => {
     try {
@@ -384,6 +445,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Advanced Analytics Routes
+  app.get("/api/analytics/user/:userId", authenticateToken, async (req: any, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Users can only view their own analytics unless they're professors/admins
+      if (req.user.id !== userId && req.user.role === 'student') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { analyticsEngine } = await import("./analytics-engine");
+      const analytics = await analyticsEngine.generateUserAnalytics(userId);
+      res.json(analytics);
+    } catch (error) {
+      console.error('Analytics error:', error);
+      res.status(500).json({ message: "Failed to generate analytics" });
+    }
+  });
+
+  app.get("/api/analytics/class/:professorId", authenticateToken, async (req: any, res) => {
+    try {
+      const professorId = parseInt(req.params.professorId);
+      
+      // Only professors can view class insights
+      if (req.user.role !== 'professor' && req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Access denied - professors only" });
+      }
+
+      const { analyticsEngine } = await import("./analytics-engine");
+      const insights = await analyticsEngine.generateClassInsights(professorId);
+      res.json(insights);
+    } catch (error) {
+      console.error('Class insights error:', error);
+      res.status(500).json({ message: "Failed to generate class insights" });
+    }
+  });
+
+  // Code Quality Analysis Routes
+  app.post("/api/code/analyze", authenticateToken, async (req: any, res) => {
+    try {
+      const { code, language, problemId } = req.body;
+      const { codeQualityAnalyzer } = await import("./code-quality-analyzer");
+      
+      const report = await codeQualityAnalyzer.analyzeCode(code, language, problemId);
+      res.json(report);
+    } catch (error) {
+      console.error('Code analysis error:', error);
+      res.status(500).json({ message: "Failed to analyze code quality" });
+    }
+  });
+
+  // Collaboration Routes
+  app.post("/api/collaboration/room", authenticateToken, async (req: any, res) => {
+    try {
+      const { problemId } = req.body;
+      const roomId = `room-${problemId}-${Date.now()}`;
+      
+      res.json({
+        roomId,
+        problemId,
+        joinUrl: `/collaborate?room=${roomId}&problem=${problemId}`
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create collaboration room" });
+    }
+  });
+
+  app.get("/api/collaboration/rooms/active", authenticateToken, async (req: any, res) => {
+    try {
+      const { getCollaboration } = await import("./real-time-collaboration");
+      const collaboration = getCollaboration();
+      
+      if (collaboration) {
+        const activeRooms = collaboration.getAllActiveRooms();
+        res.json(activeRooms);
+      } else {
+        res.json([]);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get active rooms" });
+    }
+  });
+
   const httpServer = createServer(app);
+  
+  // Initialize real-time collaboration
+  initializeCollaboration(httpServer);
+  
   return httpServer;
 }

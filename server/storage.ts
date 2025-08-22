@@ -152,6 +152,23 @@ export class DatabaseStorage implements IStorage {
     return newSession;
   }
 
+  async getInterviewSession(sessionId: number): Promise<InterviewSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(interviewSessions)
+      .where(eq(interviewSessions.id, sessionId));
+    return session || undefined;
+  }
+
+  async updateInterviewSession(sessionId: number, updates: Partial<InsertInterviewSession>): Promise<InterviewSession> {
+    const [updated] = await db
+      .update(interviewSessions)
+      .set(updates)
+      .where(eq(interviewSessions.id, sessionId))
+      .returning();
+    return updated;
+  }
+
   async getUserInterviews(userId: number): Promise<InterviewSession[]> {
     return await db
       .select()
