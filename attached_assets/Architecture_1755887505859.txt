@@ -1,0 +1,5035 @@
+﻿I'll now create the backend and frontend architecture documents, incorporating your specific tech requirements.
+
+
+## 🏗️ Creating Backend Architecture Document
+
+
+```yaml
+# Backend Architecture Document
+name: University Learning Dashboard - Backend
+version: 1.0
+date: Current
+author: Architect (Winston)
+
+
+# Backend Overview
+backend_overview:
+  description: |
+    The backend architecture supports the University Learning Dashboard with a focus on
+    secure code execution, AI-powered interview simulation, real-time collaboration,
+    and comprehensive analytics. Built on Node.js with secure Docker containers for
+    code execution, PostgreSQL for data persistence, and OpenAI GPT integration
+    for intelligent features.
+  
+  architectural_principles:
+    - Security-first design, especially for code execution
+    - Microservices architecture for scalability and maintainability
+    - Event-driven architecture for real-time features
+    - API-first design for integration flexibility
+    - Data privacy and compliance by design
+    - High availability and fault tolerance
+    - Performance optimization for real-time interactions
+
+
+# Core Backend Architecture
+backend_architecture:
+  diagram: |
+    ┌─────────────────────────────────────────────────────────────────────────────────┐
+    │                           API Gateway Layer                                    │
+    │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │
+    │  │   Auth      │ │   Content   │ │   Analytics │ │  Real-time  │ │   Admin     │ │
+    │  │ Service    │ │  Service    │ │  Service    │ │  Service    │ │  Service    │ │
+    │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ │
+    └─────────────────────────────────────────────────────────────────────────────────┘
+                                        │
+    ┌─────────────────────────────────────────┼─────────────────────────────────────────┐
+    │                                         │                                         │
+    │              ┌─────────────────────────────┼─────────────────────────────┐        │
+    │              │                             │                             │        │
+    │    ┌─────────▼─────────┐       ┌─────────▼─────────┐       ┌─────────▼─────────┐        │
+    │    │   Core Services   │       │   AI Services      │       │   External Services  │        │
+    │    │                   │       │                   │       │                   │        │
+    │    │ • User Mgmt       │       │ • Interview AI     │       │ • LMS Connectors  │        │
+    │    │ • Code Execution  │       │ • Code Review AI   │       │ • GitHub API      │        │
+    │    │ • Problem Library │       │ • Analytics AI     │       │ • Job Boards      │        │
+    │    │ • Progress Track  │       │ • Recommendation  │       │ • Communication   │        │
+    │    │ • Collaboration  │       │                   │       │ • Storage APIs     │        │
+    │    └───────────────────┘       └───────────────────┘       └───────────────────┘        │
+    │                                         │                                         │        │
+    │              ┌─────────────────────────────┼─────────────────────────────┐        │
+    │              │                             │                             │        │
+    │    ┌─────────▼─────────┐       ┌─────────▼─────────┐       ┌─────────▼─────────┐        │
+    │    │    Data Layer     │       │   Processing Layer │       │   Infrastructure   │        │
+    │    │                   │       │                   │       │                   │        │
+    │    │ • PostgreSQL      │       │ • Message Queue     │       │ • Node.js Runtime  │        │
+    │    │ • Redis Cache     │       │ • Stream Processing │       │ • Docker Containers │        │
+    │    │ • File Storage    │       │ • Batch Processing  │       │ • Load Balancers  │        │
+    │    │ • Backup Systems  │       │ • Event Processing  │       │ • Monitoring       │        │
+    │    └───────────────────┘       └───────────────────┘       └───────────────────┘        │
+    └─────────────────────────────────────────────────────────────────────────────────┘
+
+
+# Technology Stack
+technology_stack:
+  runtime:
+    primary: Node.js 18+ with ES modules
+    alternatives: None (specified requirement)
+    justification: High performance, large ecosystem, excellent for real-time applications
+    
+  frameworks:
+    web_framework: Express.js with middleware architecture
+    real_time: Socket.io v4+ with Redis adapter
+    authentication: Passport.js with OAuth 2.0 and JWT strategies
+    validation: Joi for request validation
+    documentation: Swagger/OpenAPI 3.0
+    testing: Jest + Supertest + Artillery
+    
+  database:
+    primary: PostgreSQL 15+ (specified requirement)
+    orm: Prisma for type-safe database access
+    migrations: Prisma Migrations
+    seeding: Custom seed scripts
+    connection_pooling: PgBouncer
+    backup: WAL-G for continuous backup
+    
+  caching:
+    in_memory: Redis 7+ (for sessions and real-time data)
+    cdn: CloudFront for static assets
+    application: Memory-cache for frequent queries
+    
+  message_queue:
+    primary: BullMQ (Redis-based)
+    alternatives: RabbitMQ, AWS SQS
+    justification: Lightweight, Redis-based, good for our scale
+    
+  ai_services:
+    primary: OpenAI GPT (specified requirement)
+    models: GPT-4o-mini for cost-effectiveness, GPT-4 for complex tasks
+    sdk: Official OpenAI Node.js SDK
+    fallback: Error handling and graceful degradation
+    
+  containerization:
+    platform: Docker (specified requirement)
+    orchestration: Kubernetes for production
+    runtime: Node.js containers
+    security: Multi-stage builds, non-root users, read-only filesystems
+    
+  monitoring:
+    logging: Winston with structured logging (JSON format)
+    metrics: Prometheus + Grafana
+    tracing: OpenTelemetry with Jaeger
+    error_tracking: Sentry
+    health_checks: Custom health check endpoints
+
+
+# Core Services Implementation
+core_services:
+
+
+  user_management_service:
+    description: Handles user authentication, profiles, and permissions
+    tech_stack: Node.js, Express, PostgreSQL, Redis, JWT
+    key_endpoints:
+      - POST /api/v1/auth/login
+      - POST /api/v1/auth/register
+      - POST /api/v1/auth/refresh
+      - GET /api/v1/users/profile
+      - PUT /api/v1/users/profile
+    security_implementations:
+      - Password hashing with bcrypt
+      - JWT tokens with refresh token rotation
+      - Rate limiting on authentication endpoints
+      - Session management with Redis
+    database_schema:
+      users: Core user data and authentication
+      user_sessions: Session management
+      user_roles: Role-based access control
+      user_preferences: User settings and customization
+
+
+  code_execution_service:
+    description: Secure code execution in isolated Docker containers
+    tech_stack: Node.js, Docker, Redis, PostgreSQL
+    key_endpoints:
+      - POST /api/v1/execute
+      - GET /api/v1/execute/{id}/status
+      - GET /api/v1/execute/{id}/result
+      - GET /api/v1/languages
+    security_implementations:
+      - Docker container sandboxing with resource limits
+      - Network isolation (no external access)
+      - File system restrictions (read-only except for /tmp)
+      - Process monitoring and automatic termination
+      - Malicious code detection patterns
+    container_configuration:
+      base_image: Node.js Alpine Linux minimal image
+      resource_limits:
+        cpu: "1"
+        memory: "512m"
+        pids: 100
+        timeout_seconds: 10
+      security_options:
+        no-new-privileges: true
+        read-only: true
+        tmpfs: "/tmp:size=100m"
+    database_schema:
+      executions: Execution history and results
+      execution_results: Detailed output and metrics
+      languages: Supported programming languages and versions
+
+
+  problem_library_service:
+    description: Manages coding problems, test cases, and difficulty ratings
+    tech_stack: Node.js, Express, PostgreSQL, Redis
+    key_endpoints:
+      - GET /api/v1/problems
+      - POST /api/v1/problems
+      - GET /api/v1/problems/{id}
+      - PUT /api/v1/problems/{id}
+      - POST /api/v1/problems/{id}/test
+    database_schema:
+      problems: Problem metadata and descriptions
+      test_cases: Automated test cases and validation
+      problem_tags: Categorization and search
+      problem_difficulty: Difficulty ratings and analytics
+    caching_strategy:
+      - Redis cache for frequently accessed problems
+      - CDN for problem assets and examples
+      - Query result caching for complex searches
+
+
+  progress_tracking_service:
+    description: Tracks user progress, analytics, and recommendations
+    tech_stack: Node.js, Express, PostgreSQL, Redis
+    key_endpoints:
+      - GET /api/v1/progress/{userId}
+      - POST /api/v1/progress/{userId}/update
+      - GET /api/v1/analytics/{userId}
+      - GET /api/v1/analytics/class/{classId}
+    database_schema:
+      user_progress: Individual progress tracking
+      learning_analytics: Detailed interaction data
+      achievements: User accomplishments and milestones
+      recommendations: Personalized learning suggestions
+    analytics_processing:
+      - Batch processing for large datasets
+      - Real-time updates for critical metrics
+      - Aggregation queries for performance optimization
+
+
+  collaboration_service:
+    description: Manages real-time collaboration and study groups using Socket.io
+    tech_stack: Node.js, Socket.io, Redis, PostgreSQL
+    key_endpoints:
+      - POST /api/v1/sessions
+      - GET /api/v1/sessions/{id}
+      - WebSocket /api/v1/collaborate/{sessionId}
+    real_time_features:
+      - Multi-user cursor tracking
+      - Real-time code synchronization
+      - Conflict resolution mechanisms
+      - Session recording and playback
+    socket_events:
+      - user_joined: New user joined session
+      - user_left: User left session
+      - code_change: Code content changed
+      - cursor_move: Cursor position changed
+      - chat_message: Chat message sent
+    database_schema:
+      collaboration_sessions: Session metadata and configuration
+      session_participants: User participation tracking
+      session_history: Historical data for playback
+      chat_messages: Communication history
+
+
+# AI Services Implementation
+ai_services:
+
+
+  interview_ai_service:
+    description: AI-powered interview simulation and evaluation using OpenAI GPT
+    tech_stack: Node.js, Express, OpenAI GPT, PostgreSQL
+    key_endpoints:
+      - POST /api/v1/interviews
+      - GET /api/v1/interviews/{id}
+      - POST /api/v1/interviews/{id}/feedback
+      - POST /api/v1/interviews/{id}/evaluate
+    openai_integration:
+      model: GPT-4o-mini for cost-effectiveness
+      api_management: Request batching and response caching
+      prompt_engineering: Structured prompts for consistent results
+      fallback_strategy: Error handling and graceful degradation
+    interview_types:
+      - technical: Coding problems and algorithmic questions
+      - behavioral: Situational and experience-based questions
+      - system_design: Architecture and scalability discussions
+    database_schema:
+      interview_sessions: Interview metadata and configuration
+      interview_questions: AI-generated questions and context
+      interview_responses: User responses and evaluations
+      interview_feedback: Detailed feedback and scoring
+
+
+  code_review_ai_service:
+    description: AI-powered code analysis and feedback
+    tech_stack: Node.js, Express, OpenAI GPT, PostgreSQL
+    key_endpoints:
+      - POST /api/v1/code-review
+      - GET /api/v1/code-review/{id}
+      - POST /api/v1/code-review/batch
+    analysis_capabilities:
+      - Code quality assessment
+      - Security vulnerability detection
+      - Performance optimization suggestions
+      - Best practices compliance
+      - Style and readability evaluation
+    openai_integration:
+      model: GPT-4o-mini for general analysis
+      token_management: Efficient token usage for long code files
+      context_windowing: Handling large code files with context limits
+    database_schema:
+      code_reviews: Review metadata and results
+      review_feedback: Detailed analysis and suggestions
+      code_patterns: Common patterns and issues identified
+
+
+# Database Schema
+database_schema:
+  core_tables:
+    users:
+      columns:
+        - id: UUID PRIMARY KEY
+        - username: VARCHAR(50) UNIQUE NOT NULL
+        - email: VARCHAR(255) UNIQUE NOT NULL
+        - password_hash: VARCHAR(255) NOT NULL
+        - first_name: VARCHAR(100) NOT NULL
+        - last_name: VARCHAR(100) NOT NULL
+        - role: VARCHAR(20) NOT NULL
+        - institution_id: UUID REFERENCES institutions(id)
+        - created_at: TIMESTAMP DEFAULT NOW()
+        - updated_at: TIMESTAMP DEFAULT NOW()
+      indexes:
+        - users_username_idx (username)
+        - users_email_idx (email)
+        - users_role_idx (role)
+    
+    problems:
+      columns:
+        - id: UUID PRIMARY KEY
+        - title: VARCHAR(255) NOT NULL
+        - description: TEXT NOT NULL
+        - difficulty: INTEGER NOT NULL
+        - category: VARCHAR(50) NOT NULL
+        - language: VARCHAR(20) NOT NULL
+        - created_by: UUID REFERENCES users(id)
+        - created_at: TIMESTAMP DEFAULT NOW()
+        - updated_at: TIMESTAMP DEFAULT NOW()
+      indexes:
+        - problems_difficulty_idx (difficulty)
+        - problems_category_idx (category)
+        - problems_language_idx (language)
+    
+    executions:
+      columns:
+        - id: UUID PRIMARY KEY
+        - user_id: UUID REFERENCES users(id)
+        - problem_id: UUID REFERENCES problems(id)
+        - code: TEXT NOT NULL
+        - language: VARCHAR(20) NOT NULL
+        - status: VARCHAR(20) NOT NULL
+        - output: TEXT
+        - error: TEXT
+        - execution_time: INTEGER
+        - memory_used: INTEGER
+        - created_at: TIMESTAMP DEFAULT NOW()
+      indexes:
+        - executions_user_id_idx (user_id)
+        - executions_problem_id_idx (problem_id)
+        - executions_status_idx (status)
+        - executions_created_at_idx (created_at)
+    
+    collaboration_sessions:
+      columns:
+        - id: UUID PRIMARY KEY
+        - name: VARCHAR(255) NOT NULL
+        - type: VARCHAR(50) NOT NULL
+        - created_by: UUID REFERENCES users(id)
+        - max_participants: INTEGER DEFAULT 2
+        - status: VARCHAR(20) NOT NULL
+        - created_at: TIMESTAMP DEFAULT NOW()
+        - updated_at: TIMESTAMP DEFAULT NOW()
+      indexes:
+        - collaboration_sessions_type_idx (type)
+        - collaboration_sessions_created_by_idx (created_by)
+        - collaboration_sessions_status_idx (status)
+
+
+# Security Architecture
+security_architecture:
+  authentication:
+    strategy: OAuth 2.0 + JWT with refresh tokens
+    implementation:
+      - Password hashing with bcrypt (salt rounds: 12)
+      - JWT tokens with 15-minute expiration
+      - Refresh tokens with 7-day expiration
+      - Secure, HttpOnly cookies for token storage
+      - CSRF protection for web applications
+  
+  authorization:
+    model: Role-Based Access Control (RBAC)
+    roles:
+      - student: Basic access to learning features
+      - professor: Course management and student oversight
+      - admin: Full system access
+      - career_services: Career preparation and analytics
+    implementation:
+      - Middleware-based permission checks
+      - Resource-level access control
+      - Attribute-based access control for fine-grained permissions
+  
+  data_security:
+    encryption:
+      - TLS 1.3 for all communications
+      - AES-256 for sensitive data at rest
+      - Encrypted environment variables for secrets
+    privacy:
+      - Data minimization principles
+      - GDPR and FERPA compliance
+      - User consent management
+      - Data anonymization for analytics
+  
+  code_execution_security:
+    container_isolation:
+      - Docker containers with resource limits
+      - Non-root user execution
+      - Read-only filesystem except for /tmp
+      - Network isolation (no external access)
+    resource_limits:
+      - CPU: 1 core maximum
+      - Memory: 512MB maximum
+      - Execution time: 10 seconds maximum
+      - Process count: 100 maximum
+    monitoring:
+      - Real-time resource usage monitoring
+      - Automatic container termination on limits exceeded
+      - Suspicious activity detection and alerting
+
+
+# API Design
+api_design:
+  architecture: RESTful APIs with OpenAPI 3.0 documentation
+  versioning: URL versioning (/api/v1/)
+  response_format: JSON with consistent structure
+  error_handling: Standardized error responses with HTTP status codes
+  
+  api_structure:
+    /api/v1/auth/*: Authentication endpoints
+    /api/v1/users/*: User management
+    /api/v1/problems/*: Problem library
+    /api/v1/execute/*: Code execution
+    /api/v1/progress/*: Progress tracking
+    /api/v1/sessions/*: Collaboration sessions
+    /api/v1/interviews/*: AI interviews
+    /api/v1/analytics/*: Analytics and reporting
+  
+  response_format:
+    success:
+      status: "success"
+      data: {response_data}
+      meta: {pagination, timestamps}
+    error:
+      status: "error"
+      error: {error_code, message}
+      details: {additional_error_info}
+
+
+# Performance Optimization
+performance_optimization:
+  caching_strategy:
+    - Redis for session data and frequent queries
+    - CDN for static assets
+    - Application-level caching for expensive operations
+    - Database query result caching
+  
+  database_optimization:
+    - Connection pooling with PgBouncer
+    - Read replicas for read-heavy operations
+    - Query optimization and indexing
+    - Database partitioning for large tables
+  
+  api_optimization:
+    - Response compression with gzip
+    - Request batching for AI services
+    - Asynchronous processing for long-running operations
+    - Rate limiting to prevent abuse
+  
+  real_time_optimization:
+    - Socket.io with Redis adapter for horizontal scaling
+    - Message batching for high-frequency updates
+    - Connection pooling and reuse
+    - Efficient serialization protocols
+
+
+# Monitoring and Observability
+monitoring:
+  logging:
+    framework: Winston with JSON formatting
+    levels: error, warn, info, debug
+    outputs: Console, files, log aggregation service
+    correlation_ids: Request tracing across services
+  
+  metrics:
+    collection: Prometheus client library
+    key_metrics:
+      - Request count and duration
+      - Error rates by endpoint
+      - Database query performance
+      - Memory and CPU usage
+      - Active user sessions
+    visualization: Grafana dashboards
+  
+  tracing:
+    framework: OpenTelemetry
+    export_format: Jaeger
+    sampling: 1% for production, 100% for development
+    correlation: Request tracing across service boundaries
+  
+  alerting:
+    critical_alerts:
+      - Service downtime
+      - High error rates
+      - Security incidents
+      - Resource exhaustion
+    warning_alerts:
+      - Performance degradation
+      - High memory usage
+      - Database connection issues
+    notification_channels: Email, Slack, PagerDuty
+
+
+# Deployment Architecture
+deployment:
+  environments:
+    development: Local Docker containers
+    staging: Cloud-based staging environment
+    production: Multi-region cloud deployment
+  
+  containerization:
+    base_image: Node.js 18 Alpine
+    multi_stage_builds: True
+    security_scanning: Integrated into CI/CD
+    image_signing: Notary for image verification
+  
+  orchestration:
+    platform: Kubernetes
+    deployment_strategy: Rolling updates
+    auto_scaling: Horizontal Pod Autoscaler
+    resource_limits: CPU and memory limits per pod
+  
+  infrastructure:
+    cloud_provider: AWS
+    regions: us-east-1, us-west-2, eu-west-1
+    compute: ECS Fargate for container orchestration
+    storage: RDS PostgreSQL with Multi-AZ
+    networking: VPC with private subnets
+    monitoring: CloudWatch + X-Ray
+
+
+# Disaster Recovery
+disaster_recovery:
+  backup_strategy:
+    database: Continuous backup to S3 with point-in-time recovery
+    files: Versioned S3 buckets with cross-region replication
+    configuration: Infrastructure as Code with version control
+  
+  high_availability:
+    database: Multi-AZ deployment with read replicas
+    application: Multi-region deployment with geo-routing
+    load_balancing: Application Load Balancers with health checks
+  
+  incident_response:
+    escalation_policy: Defined escalation paths
+    communication_channels: Slack, email, phone
+    recovery_procedures: Automated recovery scripts
+    post_mortem: Root cause analysis and prevention
+```
+
+
+## 🎨 Creating Frontend Architecture Document
+
+
+```yaml
+# Frontend Architecture Document
+name: University Learning Dashboard - Frontend
+version: 1.0
+date: Current
+author: Architect (Winston)
+
+
+# Frontend Overview
+frontend_overview:
+  description: |
+    The frontend architecture provides a comprehensive user interface for the University
+    Learning Dashboard, featuring React.js with Monaco Editor for VS Code-style coding
+    experiences, real-time collaboration through Socket.io, and responsive design
+    for all device types. The architecture emphasizes performance, accessibility,
+    and maintainability while supporting complex interactive features.
+  
+  architectural_principles:
+    - Component-based architecture for reusability
+    - Progressive enhancement for accessibility
+    - Performance-first design with lazy loading
+    - Responsive design for all device types
+    - State management clarity and predictability
+    - Developer experience and productivity
+    - Real-time user experience for collaboration
+
+
+# Frontend Architecture Diagram
+frontend_architecture:
+  diagram: |
+    ┌─────────────────────────────────────────────────────────────────────────────────┐
+    │                           Client Applications                                 │
+    │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │
+    │  │   Web App   │ │  Mobile     │ │   Admin     │ │   Desktop   │ │   Public    │ │
+    │  │   (React)   │ │   App       │ │   Panel     │ │   Apps      │ │   Pages     │ │
+    │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ │
+    └─────────────────────────────────────────────────────────────────────────────────┘
+                                        │
+    ┌─────────────────────────────────────┼─────────────────────────────────────────┐
+    │                                     │                                         │
+    │              ┌─────────────────────────────┼─────────────────────────────┐        │
+    │              │                             │                             │        │
+    │    ┌─────────▼─────────┐       ┌─────────▼─────────┐       ┌─────────▼─────────┐        │
+    │    │   UI Components   │       │   State Management │       │   Real-time Layer  │        │
+    │    │                   │       │                   │       │                   │        │
+    │    │ • Monaco Editor   │       │ • Redux Toolkit    │       │ • Socket.io       │        │
+    │    │ • Material-UI     │       │ • RTK Query        │       │ • Event Handlers  │        │
+    │    │ • Custom Hooks    │       │ • Local State      │       │ • Connection Mgmt  │        │
+    │    │ • Layout System   │       │ • Persistence      │       │ • Reconnection     │        │
+    │    └───────────────────┘       └───────────────────┘       └───────────────────┘        │
+    │                                     │                                         │        │
+    │              ┌─────────────────────────────┼─────────────────────────────┐        │
+    │              │                             │                             │        │
+    │    ┌─────────▼─────────┐       ┌─────────▼─────────┐       ┌─────────▼─────────┐        │
+    │    │   Services Layer  │       │   Utilities Layer  │       │   Platform Layer   │        │
+    │    │                   │       │                   │       │                   │        │
+    │    │ • API Client      │       │ • Helpers          │       │ • React Router    │        │
+    │    │ • Auth Service    │       │ • Validators      │       │ • React Query     │        │
+    │    │ • Analytics       │       │ • Formatters      │       │ • Workbox (PWA)   │        │
+    │    │ • File Upload     │       │ • Constants        │       │ • Internationalization│        │
+    │    └───────────────────┘       └───────────────────┘       └───────────────────┘        │
+    └─────────────────────────────────────────────────────────────────────────────────┘
+
+
+# Technology Stack
+technology_stack:
+  core_framework:
+    primary: React.js 18+ (specified requirement)
+    renderer: ReactDOM
+    concurrent_features: Concurrent Mode, Suspense, Transitions
+    justification: Component-based architecture, large ecosystem, excellent performance
+    
+  language:
+    primary: TypeScript
+    strict_mode: Enabled
+    target: ES2020
+    justification: Type safety, better developer experience, improved maintainability
+    
+  state_management:
+    global: Redux Toolkit with RTK Query
+    local: React hooks (useState, useReducer)
+    persistence: Redux Persist with encryption
+    justification: Predictable state management, excellent dev tools, server state integration
+    
+  ui_library:
+    primary: Material-UI v5 (MUI)
+    theming: Custom theme with university branding
+    components: Data Grid, DatePicker, Stepper, etc.
+    icons: Material Icons
+    justification: Comprehensive component library, accessibility, theming system
+    
+  code_editor:
+    primary: Monaco Editor (specified requirement)
+    integration: @monaco-editor/react
+    features: IntelliSense, debugging, multi-language support
+    customization: VS Code-style experience with university theming
+    justification: Industry-standard editor, rich features, familiar experience
+    
+  real_time:
+    library: Socket.io Client (specified requirement)
+    version: v4+
+    features: Auto-reconnection, event batching, room management
+    fallback: HTTP long-polling
+    justification: Reliable real-time communication, excellent React integration
+    
+  build_tool:
+    primary: Vite
+    alternatives: Webpack, Create React App
+    features: Fast development server, optimized builds, plugin ecosystem
+    justification: Development speed, modern features, excellent TypeScript support
+    
+  testing:
+    unit: Jest + React Testing Library
+    integration: Cypress
+    e2e: Cypress or Playwright
+    coverage: Istanbul with coverage reports
+    justification: Comprehensive testing strategy, good developer experience
+
+
+# Component Architecture
+component_architecture:
+  design_system:
+    theming:
+      - Custom Material-UI theme with university colors
+      - Dark mode support
+      - Responsive breakpoints
+      - Typography scale
+    components:
+      layout: AppLayout, DashboardLayout, AuthLayout
+      navigation: Sidebar, Header, Breadcrumbs
+      forms: Form, FormField, FormSelect, FormDatePicker
+      data_display: DataTable, Chart, ProgressIndicator
+      feedback: Alert, Toast, Dialog, LoadingSpinner
+    accessibility:
+      - ARIA attributes
+      - Keyboard navigation
+      - Screen reader support
+      - Focus management
+      - Color contrast compliance
+
+
+  page_structure:
+    authentication_pages:
+      - Login: Email/password, SSO options
+      - Register: User registration with validation
+      - ForgotPassword: Password reset flow
+      - VerifyEmail: Email verification process
+    
+    dashboard_pages:
+      - StudentDashboard: Overview of progress, recommendations, upcoming sessions
+      - ProfessorDashboard: Class overview, student progress, analytics
+      - AdminDashboard: System metrics, user management, configuration
+      - CareerServicesDashboard: Placement metrics, readiness assessments
+    
+    feature_pages:
+      - CodeEditor: Monaco Editor with problem description and test cases
+      - InterviewSimulator: AI interview interface with real-time feedback
+      - ProgressAnalytics: Personal progress charts and insights
+      - Collaboration: Real-time pair programming interface
+      - ProblemLibrary: Browse and filter coding problems
+      - StudyGroups: Create and join study sessions
+    
+    settings_pages:
+      - ProfileSettings: User profile and preferences
+      - AccountSettings: Security and notification settings
+      - InstitutionSettings: University-specific configuration
+      - IntegrationSettings: LMS and third-party integrations
+
+
+  component_hierarchy:
+    app_level:
+      - App: Root component with routing and providers
+      - AuthProvider: Authentication state and context
+      - ThemeProvider: Material-UI theme and styling
+      - ErrorBoundary: Error handling and fallback UI
+    
+    layout_level:
+      - AppLayout: Main application layout with navigation
+      - AuthLayout: Authentication pages layout
+      - DashboardLayout: Dashboard-specific layout
+      - PrintLayout: Print-optimized layout
+    
+    feature_level:
+      - CodeEditor: Monaco Editor integration with toolbar
+      - InterviewInterface: AI interview simulation UI
+      - ProgressCharts: Data visualization components
+      - CollaborationSpace: Real-time collaboration interface
+      - ProblemCard: Problem display and interaction
+    
+    ui_level:
+      - FormField: Reusable form input with validation
+      - DataTable: Sortable, filterable data table
+      - ChartWrapper: Chart.js integration with responsive design
+      - LoadingSpinner: Loading state indicator
+      - NotificationToast: Toast notification system
+
+
+# State Management Architecture
+state_management:
+  redux_structure:
+    store_configuration:
+      - Redux Toolkit for store setup
+      - RTK Query for server state
+      - Redux Persist for local storage
+      - Redux DevTools for development
+    
+    slices:
+      auth:
+        state: user data, authentication status, tokens
+        actions: login, logout, refresh, updateProfile
+        async_thunks: authenticateUser, refreshToken, fetchUserProfile
+      
+      ui:
+        state: theme, sidebar state, loading states, notifications
+        actions: toggleTheme, toggleSidebar, setLoading, addNotification
+        reducers: UI state management
+      
+      problems:
+        state: problems list, filters, current problem
+        actions: setProblems, setFilters, setCurrentProblem
+        async_thunks: fetchProblems, fetchProblemById, submitSolution
+      
+      progress:
+        state: user progress, achievements, analytics
+        actions: updateProgress, addAchievement, setAnalytics
+        async_thunks: fetchProgress, fetchAnalytics, updateProgress
+      
+      collaboration:
+        state: sessions, active session, participants
+        actions: setSessions, setActiveSession, updateParticipants
+        async_thunks: fetchSessions, joinSession, leaveSession
+      
+      interviews:
+        state: interviews, current interview, feedback
+        actions: setInterviews, setCurrentInterview, setFeedback
+        async_thunks: startInterview, submitResponse, getFeedback
+    
+    rtk_query:
+      api_definition:
+        - Base query with axios configuration
+        - Tag-based cache invalidation
+        - Automatic refetching and caching
+        - Optimistic updates for better UX
+      
+      endpoints:
+        authApi: Authentication endpoints
+        problemsApi: Problem library endpoints
+        progressApi: Progress tracking endpoints
+        collaborationApi: Real-time collaboration endpoints
+        interviewsApi: AI interview endpoints
+        analyticsApi: Analytics and reporting endpoints
+
+
+  local_state:
+    component_state:
+      - useState for simple component state
+      - useReducer for complex component logic
+      - useMemo for expensive computations
+      - useCallback for stable function references
+    
+    custom_hooks:
+      useAuth: Authentication state and actions
+      useProblem: Problem data and operations
+      useProgress: Progress tracking and analytics
+      useCollaboration: Real-time collaboration state
+      useInterview: AI interview state and actions
+      useDebounce: Debounced input handling
+      useLocalStorage: Local storage persistence
+      useApi: API call abstraction with error handling
+
+
+# Real-Time Architecture
+real_time_architecture:
+  socket_integration:
+    connection_management:
+      - Socket.io client with auto-reconnection
+      - Connection state management
+      - Authentication with JWT tokens
+      - Room-based organization for sessions
+    
+    event_handling:
+      collaboration_events:
+        - user_joined: New user joined session
+        - user_left: User left session
+        - code_change: Code content changed
+        - cursor_move: Cursor position changed
+        - chat_message: Chat message sent
+        - session_ended: Session completed
+      
+      interview_events:
+        - interview_started: Interview session began
+        - question_asked: New question from AI
+        - response_submitted: User response received
+        - feedback_provided: AI feedback generated
+        - interview_completed: Interview finished
+      
+      progress_events:
+        - progress_updated: User progress changed
+        - achievement_unlocked: New achievement earned
+        - recommendation_generated: New recommendation available
+    
+    state_synchronization:
+      - Optimistic updates for immediate feedback
+      - Conflict resolution for concurrent edits
+      - Event ordering with timestamps
+      - Reconnection with state recovery
+
+
+# Monaco Editor Integration
+monaco_editor:
+  configuration:
+    basic_setup:
+      - Language support for Python, Java, JavaScript, C++, SQL
+      - Theme customization (light/dark mode)
+      - Font size and family configuration
+      - Line numbers and minimap
+      - Word wrap and scroll beyond last line
+    
+    advanced_features:
+      - IntelliSense code completion
+      - Error highlighting and diagnostics
+      - Multi-cursor editing
+      - Find and replace functionality
+      - Code folding and outlining
+      - Keyboard shortcuts customization
+    
+    integration_points:
+      - Problem description panel
+      - Test case display and execution
+      - Output console with error highlighting
+      - Performance metrics display
+      - Collaboration cursor tracking
+      - Version control integration
+
+
+  custom_features:
+    university_theming:
+      - Custom color scheme matching university branding
+      - University-specific code snippets
+      - Course-specific templates and examples
+    
+    educational_features:
+      - Hint system with progressive disclosure
+      - Step-by-step debugging tools
+      - Performance analysis and optimization suggestions
+      - Plagiarism detection indicators
+    
+    collaboration_features:
+      - Real-time multi-user editing
+      - Cursor and selection sharing
+      - Change tracking and attribution
+      - Conflict resolution UI
+
+
+# API Integration
+api_integration:
+  client_configuration:
+    base_setup:
+      - Axios with interceptors for auth and error handling
+      - Base URL configuration for different environments
+      - Request/response transformers
+      - Timeout and retry logic
+    
+    authentication:
+      - JWT token management
+      - Automatic token refresh
+      - 401 handling with redirect to login
+      - Permission-based request filtering
+    
+    error_handling:
+      - Global error interceptor
+      - User-friendly error messages
+      - Error logging and reporting
+      - Retry mechanisms for transient failures
+
+
+  api_services:
+    auth_service:
+      - login, register, logout
+      - password reset
+      - profile management
+      - token refresh
+    
+    problems_service:
+      - fetch problems with filtering
+      - get problem details
+      - submit solution
+      - get problem statistics
+    
+    progress_service:
+      - fetch user progress
+      - update progress
+      - get achievements
+      - get analytics
+    
+    collaboration_service:
+      - create session
+      - join session
+      - leave session
+      - send chat message
+    
+    interviews_service:
+      - start interview
+      - submit response
+      - get feedback
+      - get interview history
+
+
+# Performance Optimization
+performance_optimization:
+  code_splitting:
+    route_based: Dynamic imports for route components
+    component_based: React.lazy for heavy components
+    library_based: External libraries loaded on demand
+    
+  lazy_loading:
+    images: Intersection Observer for image loading
+    components: Load components when visible
+    data: Infinite scroll for large datasets
+    
+  caching:
+    api_cache: RTK Query caching with invalidation
+    component_cache: React.memo for expensive components
+    data_cache: Service Worker for offline support
+    
+  bundle_optimization:
+    tree_shaking: Eliminate unused code
+    code_splitting: Split bundles by route
+    compression: Brotli and gzip compression
+    cdn: Static assets served from CDN
+
+
+# Testing Architecture
+testing_strategy:
+  unit_testing:
+    framework: Jest + React Testing Library
+    coverage: 80% minimum coverage
+    mocking: MSW for API mocking
+    utilities: Custom testing utilities and helpers
+    
+  integration_testing:
+    framework: Cypress
+    scenarios: User workflows and critical paths
+    fixtures: Test data management
+    reporting: Detailed test reports and screenshots
+    
+  e2e_testing:
+    framework: Cypress or Playwright
+    environments: Staging and production-like
+    scenarios: Complete user journeys
+    performance: Performance metrics collection
+  
+  testing_utilities:
+    custom_hooks: Reusable testing hooks
+    test_data: Factories and fixtures
+    mock_services: API and service mocking
+    accessibility: Axe-core for accessibility testing
+
+
+# Accessibility Architecture
+accessibility:
+  standards_compliance:
+    - WCAG 2.1 AA compliance
+    - Section 508 compliance
+    - Keyboard navigation support
+    - Screen reader compatibility
+    - Color contrast requirements
+  
+  implementation_features:
+    semantic_html: Proper HTML5 semantic elements
+    aria_attributes: Comprehensive ARIA labels and descriptions
+    focus_management: Logical tab order and focus indicators
+    keyboard_navigation: Full keyboard accessibility
+    screen_reader: Compatibility with JAWS, NVDA, VoiceOver
+  
+  testing_tools:
+    automated_testing: Axe-core integration
+    manual_testing: Screen reader testing
+    color_contrast: Contrast checking tools
+    keyboard_navigation: Tab order testing
+
+
+# Deployment Architecture
+deployment:
+  build_process:
+    toolchain: Vite with TypeScript
+    optimization: Code splitting, tree shaking, minification
+    assets_handling: Static asset optimization and fingerprinting
+    environment_variables: Build-time environment injection
+  
+  hosting:
+    static_assets: CDN (CloudFront or similar)
+    application_server: Node.js server or serverless functions
+    ssl_termination: Automatic SSL certificate management
+    content_delivery: Global CDN distribution
+  
+  continuous_deployment:
+    ci_cd: GitHub Actions or similar
+    automated_testing: Test suite execution
+    deployment_strategy: Blue-green or canary deployments
+    monitoring: Deployment health checks and monitoring
+
+
+# Monitoring and Analytics
+monitoring:
+  error_tracking:
+    tool: Sentry or similar
+    error_boundaries: React error boundaries
+    user_feedback: User-reported error collection
+    performance_monitoring: Slow component detection
+  
+  user_analytics:
+    tool: Google Analytics or similar
+    event_tracking: User interaction tracking
+    funnel_analysis: Conversion funnel monitoring
+    user_segments: Behavioral segmentation
+  
+  performance_monitoring:
+    web_vitals: Core Web Vitals tracking
+    load_time: Page and component load times
+    resource_usage: Memory and CPU usage monitoring
+    real_user_monitoring: Real user experience data
+
+
+# Security Architecture
+security:
+  client_security:
+    xss_prevention: React's built-in XSS protection
+    csrf_protection: CSRF token management
+    content_security: CSP headers implementation
+    input_validation: Client and server-side validation
+  
+  data_security:
+    sensitive_data: Encryption of sensitive data in localStorage
+    secure_communication: HTTPS for all API calls
+    authentication: Secure token management and storage
+    authorization: Role-based access control
+  
+  security_testing:
+    vulnerability_scanning: Automated security scanning
+    penetration_testing: Regular security assessments
+    dependency_checking: Third-party vulnerability monitoring
+    code_review: Security-focused code reviews
+```
+
+
+## 📋 Architecture Summary
+
+
+I've created comprehensive architecture documents for the University Learning Dashboard that incorporate your specific technology requirements:
+
+
+### Key Technology Choices Implemented:
+
+
+1. **Frontend: React.js with Monaco Editor**
+   - Component-based architecture with TypeScript
+   - Monaco Editor integration for VS Code-style coding experience
+   - Material-UI for consistent design system
+   - Redux Toolkit with RTK Query for state management
+   - Socket.io for real-time collaboration features
+
+
+2. **Backend: Node.js with Docker Containers**
+   - Microservices architecture with Express.js
+   - Secure Docker containers for code execution
+   - PostgreSQL for data persistence
+   - Redis for caching and real-time features
+   - Comprehensive security implementation
+
+
+3. **AI: OpenAI GPT Integration**
+   - Interview AI service for simulation and feedback
+   - Code review AI for analysis and suggestions
+   - Analytics AI for predictive modeling
+   - Cost optimization with request batching
+
+
+4. **Collaboration: Socket.io**
+   - Real-time code synchronization
+   - Multi-user cursor tracking
+   - Session management and recording
+   - Conflict resolution mechanisms
+
+
+5. **Database: PostgreSQL**
+   - Primary data storage for users, problems, and progress
+   - TimescaleDB for analytics and time-series data
+   - Comprehensive schema design with proper indexing
+   - Backup and recovery strategies
+
+
+### Architecture Highlights:
+
+
+- **Security-First Design**: Comprehensive security implementation for code execution, data protection, and user privacy
+- **Scalable Microservices**: Modular architecture that can scale independently based on demand
+- **Real-Time Capabilities**: WebSocket-based real-time features for collaboration and live feedback
+- **Performance Optimization**: Multiple layers of optimization from frontend to backend
+- **Developer Experience**: Comprehensive tooling for development, testing, and deployment
+
+
+
+
+
+
+I'll create a complete technical architecture document with all the missing components you've requested. This will be a comprehensive document that builds upon our previous architecture specifications.
+
+
+# 🏗️ COMPLETE TECHNICAL ARCHITECTURE DOCUMENT
+## University Learning Dashboard
+
+
+---
+
+
+## Table of Contents
+1. [Executive Summary](#executive-summary)
+2. [Visual Architecture Diagrams](#visual-architecture-diagrams)
+3. [Detailed API Specifications](#detailed-api-specifications)
+4. [Data Flow Diagrams](#data-flow-diagrams)
+5. [Security Architecture Details](#security-architecture-details)
+6. [Performance Specifications](#performance-specifications)
+7. [Infrastructure Specifications](#infrastructure-specifications)
+8. [Appendices](#appendices)
+
+
+---
+
+
+## Executive Summary
+
+
+This document provides a complete technical architecture specification for the University Learning Dashboard, a comprehensive educational platform that bridges academic computer science education and industry requirements. The architecture is designed to support secure coding practice, AI-powered interview preparation, advanced analytics, and real-time collaboration while maintaining security, scalability, and performance.
+
+
+### Key Architectural Decisions:
+- **Frontend**: React.js with Monaco Editor for VS Code-style coding experience
+- **Backend**: Node.js microservices with Docker containerization for secure code execution
+- **AI Integration**: OpenAI GPT for intelligent interview simulation and code analysis
+- **Real-time**: Socket.io for collaborative features and live updates
+- **Database**: PostgreSQL with TimescaleDB for analytics and time-series data
+- **Infrastructure**: Cloud-native architecture with Kubernetes orchestration
+
+
+---
+
+
+## Visual Architecture Diagrams
+
+
+### System Context Diagram
+
+
+```mermaid
+graph TD
+    subgraph "External Systems"
+        LMS[LMS Systems<br/>Canvas, Blackboard, Moodle]
+        EMPLOYERS[Employer Systems<br/>LinkedIn, Indeed, Company Portals]
+        EXTERNAL_API[External APIs<br/>GitHub, OpenAI, Payment]
+        IDP[Identity Providers<br/>SAML, OAuth, LDAP]
+    end
+    
+    subgraph "University Learning Dashboard"
+        ULD[University Learning Dashboard<br/>Main System]
+        ANALYTICS[Analytics Engine<br/>Progress Tracking]
+        AI_SERVICES[AI Services<br/>Interview Simulation]
+        CODE_EXEC[Code Execution<br/>Secure Environment]
+        COLLAB[Collaboration<br/>Real-time Features]
+    end
+    
+    subgraph "Users"
+        STUDENTS[Students]
+        PROFESSORS[Professors]
+        ADMIN[Administrators]
+        CAREER[Career Services]
+    end
+    
+    %% Interactions
+    STUDENTS --> ULD
+    PROFESSORS --> ULD
+    ADMIN --> ULD
+    CAREER --> ULD
+    
+    ULD --> LMS
+    ULD --> EMPLOYERS
+    ULD --> EXTERNAL_API
+    ULD --> IDP
+    
+    ULD --> ANALYTICS
+    ULD --> AI_SERVICES
+    ULD --> CODE_EXEC
+    ULD --> COLLAB
+    
+    %% Data Flows
+    style STUDENTS fill:#e1f5fe
+    style PROFESSORS fill:#e8f5e8
+    style ADMIN fill:#fff3e0
+    style CAREER fill:#fce4ec
+    style ULD fill:#e3f2fd
+```
+
+
+### Container Diagram
+
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        WEB[Web App<br/>React + Monaco]
+        MOBILE[Mobile App<br/>React Native]
+        ADMIN[Admin Panel<br/>React Dashboard]
+    end
+    
+    subgraph "API Gateway"
+        GATEWAY[API Gateway<br/>Kong/Nginx]
+        AUTH[Authentication<br/>OAuth + JWT]
+        RATE_LIMIT[Rate Limiting<br/>Redis-based]
+    end
+    
+    subgraph "Application Services"
+        subgraph "Core Services"
+            USER_MGMT[User Management<br/>Node.js]
+            PROBLEM_LIB[Problem Library<br/>Node.js]
+            PROGRESS[Progress Tracking<br/>Node.js]
+        end
+        
+        subgraph "AI Services"
+            INTERVIEW_AI[Interview AI<br/>Python + GPT]
+            CODE_REVIEW[Code Review AI<br/>Python + GPT]
+            ANALYTICS_AI[Analytics AI<br/>Python + TF]
+        end
+        
+        subgraph "Execution Services"
+            CODE_EXEC[Code Execution<br/>Docker + Node.js]
+            COLLAB[Collaboration<br/>Socket.io + Redis]
+        end
+    end
+    
+    subgraph "Data Layer"
+        POSTGRES[(PostgreSQL<br/>Primary DB)]
+        REDIS[(Redis<br/>Cache)]
+        TIMESCALEDB[(TimescaleDB<br/>Analytics)]
+        S3[(S3 Storage<br/>Files)]
+        PINECONE[(Pinecone<br/>Vector DB)]
+    end
+    
+    subgraph "External Services"
+        OPENAI[OpenAI API<br/>GPT Models]
+        GITHUB[GitHub API<br/>Integration]
+        LMS_API[LMS APIs<br/>Canvas/Blackboard]
+        PAYMENT[Payment APIs<br/>Stripe/PayPal]
+    end
+    
+    %% Connections
+    WEB --> GATEWAY
+    MOBILE --> GATEWAY
+    ADMIN --> GATEWAY
+    
+    GATEWAY --> AUTH
+    GATEWAY --> RATE_LIMIT
+    GATEWAY --> USER_MGMT
+    GATEWAY --> PROBLEM_LIB
+    GATEWAY --> PROGRESS
+    GATEWAY --> CODE_EXEC
+    GATEWAY --> COLLAB
+    GATEWAY --> INTERVIEW_AI
+    GATEWAY --> CODE_REVIEW
+    GATEWAY --> ANALYTICS_AI
+    
+    USER_MGMT --> POSTGRES
+    PROBLEM_LIB --> POSTGRES
+    PROGRESS --> POSTGRES
+    PROGRESS --> TIMESCALEDB
+    CODE_EXEC --> POSTGRES
+    COLLAB --> POSTGRES
+    COLLAB --> REDIS
+    INTERVIEW_AI --> PINECONE
+    CODE_REVIEW --> PINECONE
+    ANALYTICS_AI --> TIMESCALEDB
+    
+    CODE_EXEC --> S3
+    
+    INTERVIEW_AI --> OPENAI
+    CODE_REVIEW --> OPENAI
+    USER_MGMT --> GITHUB
+    GATEWAY --> LMS_API
+    GATEWAY --> PAYMENT
+    
+    %% Styling
+    style WEB fill:#e3f2fd
+    style GATEWAY fill:#fff3e0
+    style USER_MGMT fill:#e8f5e8
+    style INTERVIEW_AI fill:#fce4ec
+    style CODE_EXEC fill:#f3e5f5
+    style POSTGRES fill:#e0f2f1
+    style OPENAI fill:#e8eaf6
+```
+
+
+### Component Diagram - Code Execution Service
+
+
+```mermaid
+graph TB
+    subgraph "Code Execution Service Components"
+        API[API Layer<br/>Express.js]
+        AUTH[Auth Middleware<br/>JWT Validation]
+        VALIDATION[Request Validator<br/>Input Sanitization]
+        QUEUE[Job Queue<br/>BullMQ + Redis]
+        ORCHESTRATOR[Container Orchestrator<br/>Kubernetes]
+        EXECUTOR[Code Executor<br/>Docker Runtime]
+        MONITOR[Resource Monitor<br/>Prometheus]
+        LOGGER[Event Logger<br/>Winston]
+    end
+    
+    subgraph "Security Components"
+        SANDBOX[Sandbox Manager<br/>Security Policies]
+        RESOURCE_LIMITS[Resource Limiter<br/>cgroups/namespaces]
+        MALWARE_SCAN[Malware Scanner<br/>Pattern Detection]
+    end
+    
+    subgraph "Data Components"
+        RESULTS_DB[Results Database<br/>PostgreSQL]
+        METRICS_DB[Metrics Database<br/>TimescaleDB]
+        CACHE[Response Cache<br/>Redis]
+        FILES[File Storage<br/>S3]
+    end
+    
+    subgraph "External Dependencies"
+        DOCKER[Docker Engine<br/>Container Runtime]
+        K8S[Kubernetes API<br/>Orchestration]
+        MON_SYS[Monitoring System<br/>Prometheus]
+    end
+    
+    %% Internal Flow
+    API --> AUTH
+    AUTH --> VALIDATION
+    VALIDATION --> QUEUE
+    QUEUE --> ORCHESTRATOR
+    ORCHESTRATOR --> EXECUTOR
+    EXECUTOR --> SANDBOX
+    SANDBOX --> RESOURCE_LIMITS
+    RESOURCE_LIMITS --> MALWARE_SCAN
+    MALWARE_SCAN --> MONITOR
+    MONITOR --> LOGGER
+    
+    %% Data Flow
+    EXECUTOR --> RESULTS_DB
+    MONITOR --> METRICS_DB
+    API --> CACHE
+    EXECUTOR --> FILES
+    
+    %% External Dependencies
+    ORCHESTRATOR --> DOCKER
+    ORCHESTRATOR --> K8S
+    MONITOR --> MON_SYS
+    
+    %% Styling
+    style API fill:#e3f2fd
+    style QUEUE fill:#fff3e0
+    style EXECUTOR fill:#e8f5e8
+    style SANDBOX fill:#fce4ec
+    style RESULTS_DB fill:#e0f2f1
+    style DOCKER fill:#e8eaf6
+```
+
+
+### Deployment Diagram
+
+
+```mermaid
+graph TB
+    subgraph "AWS Cloud"
+        subgraph "us-east-1 Region"
+            subgraph "VPC"
+                subgraph "Public Subnets"
+                    ALB[Application Load Balancer]
+                    NAT[NAT Gateway]
+                    BASTION[Bastion Host]
+                end
+                
+                subgraph "Private Subnets"
+                    subgraph "ECS Cluster"
+                        subgraph "Frontend Service"
+                            FE1[Frontend Container 1]
+                            FE2[Frontend Container 2]
+                            FE3[Frontend Container 3]
+                        end
+                        
+                        subgraph "Backend Services"
+                            API1[API Gateway Container]
+                            API2[API Gateway Container]
+                            USER_MGMT[User Mgmt Container]
+                            PROBLEM[Problem Library Container]
+                            PROGRESS[Progress Tracking Container]
+                        end
+                        
+                        subgraph "AI Services"
+                            INTERVIEW[Interview AI Container]
+                            CODE_REVIEW[Code Review Container]
+                            ANALYTICS[Analytics Container]
+                        end
+                        
+                        subgraph "Execution Services"
+                            CODE_EXEC[Code Execution Container]
+                            COLLAB[Collaboration Container]
+                        end
+                    end
+                    
+                    subgraph "RDS Instance"
+                        POSTGRES[(PostgreSQL Primary)]
+                        REPLICA1[(PostgreSQL Read Replica 1)]
+                        REPLICA2[(PostgreSQL Read Replica 2)]
+                    end
+                    
+                    subgraph "ElastiCache"
+                        REDIS[(Redis Cluster)]
+                    end
+                    
+                    subgraph "EFS"
+                        SHARED_FILES[Shared File System]
+                    end
+                end
+            end
+            
+            subgraph "S3 Buckets"
+                ASSETS[Assets Bucket]
+                BACKUPS[Backups Bucket]
+                LOGS[Logs Bucket]
+            end
+            
+            subgraph "CloudFront"
+                CDN[CDN Distribution]
+            end
+            
+            subgraph "Route 53"
+                DNS[DNS Service]
+            end
+        end
+        
+        subgraph "us-west-2 Region"
+            subgraph "DR VPC"
+                DR_ECS[DR ECS Cluster]
+                DR_RDS[(DR PostgreSQL)]
+                DR_REDIS[(DR Redis)]
+            end
+        end
+    end
+    
+    subgraph "External Services"
+        OPENAI[OpenAI API]
+        GITHUB[GitHub API]
+        LMS[LMS APIs]
+        PAYMENT[Payment APIs]
+    end
+    
+    %% Connections
+    ALB --> FE1
+    ALB --> FE2
+    ALB --> FE3
+    ALB --> API1
+    ALB --> API2
+    
+    API1 --> USER_MGMT
+    API1 --> PROBLEM
+    API1 --> PROGRESS
+    API1 --> INTERVIEW
+    API1 --> CODE_REVIEW
+    API1 --> ANALYTICS
+    API1 --> CODE_EXEC
+    API1 --> COLLAB
+    
+    USER_MGMT --> POSTGRES
+    PROBLEM --> POSTGRES
+    PROGRESS --> POSTGRES
+    PROGRESS --> REPLICA1
+    CODE_EXEC --> SHARED_FILES
+    COLLAB --> REDIS
+    
+    ALB --> CDN
+    DNS --> ALB
+    
+    INTERVIEW --> OPENAI
+    CODE_REVIEW --> OPENAI
+    USER_MGMT --> GITHUB
+    API1 --> LMS
+    API1 --> PAYMENT
+    
+    %% Backup Connections
+    POSTGRES -.-> BACKUPS
+    REDIS -.-> BACKUPS
+    SHARED_FILES -.-> BACKUPS
+    
+    %% DR Connections
+    POSTGRES -.-> DR_RDS
+    REDIS -.-> DR_REDIS
+    ECS Cluster -.-> DR_ECS
+    
+    %% Styling
+    style ALB fill:#fff3e0
+    style FE1 fill:#e3f2fd
+    style API1 fill:#e8f5e8
+    style INTERVIEW fill:#fce4ec
+    style POSTGRES fill:#e0f2f1
+    style REDIS fill:#f3e5f5
+    style CDN fill:#e8eaf6
+```
+
+
+### Sequence Diagram - Code Execution Flow
+
+
+```mermaid
+sequenceDiagram
+    participant User as Student
+    participant Frontend as React App
+    participant API as API Gateway
+    participant Service as Code Execution Service
+    participant Queue as Job Queue
+    participant Docker as Docker Container
+    participant DB as Database
+    participant Cache as Redis Cache
+    
+    User->>Frontend: Submit Code Solution
+    Frontend->>API: POST /api/v1/execute {code, language, problemId}
+    API->>Service: Forward execution request
+    Service->>Queue: Add execution job
+    Queue-->>Service: Job queued (jobId)
+    Service-->>API: {status: "queued", jobId: "123"}
+    API-->>Frontend: {status: "queued", jobId: "123"}
+    Frontend-->>User: Show queued status
+    
+    loop Poll for status
+        Frontend->>API: GET /api/v1/execute/123/status
+        API->>Service: Get job status
+        Service->>Queue: Check job status
+        Queue-->>Service: {status: "processing"}
+        Service-->>API: {status: "processing"}
+        API-->>Frontend: {status: "processing"}
+        Frontend->>User: Update progress
+    end
+    
+    Service->>Queue: Get next job
+    Queue-->>Service: Job details
+    Service->>Docker: Create container with code
+    Docker->>Docker: Execute code in sandbox
+    Docker-->>Service: Execution results
+    Service->>DB: Store execution results
+    Service->>Cache: Cache results
+    Service->>Queue: Mark job complete
+    
+    Frontend->>API: GET /api/v1/execute/123/status
+    API->>Service: Get job status
+    Service->>Queue: Check job status
+    Queue-->>Service: {status: "completed"}
+    Service->>Cache: Get cached results
+    Cache-->>Service: Execution results
+    Service-->>API: {status: "completed", results: {...}}
+    API-->>Frontend: Execution results
+    Frontend->>User: Display results
+```
+
+
+### Sequence Diagram - Real-time Collaboration
+
+
+```mermaid
+sequenceDiagram
+    participant User1 as Student 1
+    participant User2 as Student 2
+    participant Frontend1 as React App 1
+    participant Frontend2 as React App 2
+    participant Socket as Socket.io Server
+    participant Service as Collaboration Service
+    participant DB as Database
+    
+    User1->>Frontend1: Create collaboration session
+    Frontend1->>Socket: Connect to socket
+    Socket->>Service: Authenticate user
+    Service->>DB: Create session record
+    DB-->>Service: Session created
+    Service-->>Socket: Session ID (sess123)
+    Socket-->>Frontend1: Session ID (sess123)
+    Frontend1->>User1: Show session with invite link
+    
+    User2->>Frontend2: Join session via link
+    Frontend2->>Socket: Connect with session ID
+    Socket->>Service: Authenticate and join session
+    Service->>DB: Add participant to session
+    DB-->>Service: Participant added
+    Service-->>Socket: User joined event
+    Socket->>Frontend1: user_joined event
+    Socket->>Frontend2: user_joined event
+    Frontend1->>User1: Show User2 joined
+    Frontend2->>User2: Show in session
+    
+    User1->>Frontend1: Edit code
+    Frontend1->>Socket: code_change event
+    Socket->>Service: Broadcast code change
+    Service->>DB: Store code version
+    Service-->>Socket: code_change broadcast
+    Socket->>Frontend2: code_change event
+    Frontend2->>User2: Update code editor
+    
+    User2->>Frontend2: Send chat message
+    Frontend2->>Socket: chat_message event
+    Socket->>Service: Broadcast chat message
+    Service->>DB: Store chat message
+    Service-->>Socket: chat_message broadcast
+    Socket->>Frontend1: chat_message event
+    Frontend1->>User1: Display chat message
+    
+    User1->>Frontend1: Leave session
+    Frontend1->>Socket: Disconnect
+    Socket->>Service: User left event
+    Service->>DB: Update session participants
+    Service-->>Socket: user_left event
+    Socket->>Frontend2: user_left event
+    Frontend2->>User2: Show User1 left
+```
+
+
+---
+
+
+## Detailed API Specifications
+
+
+### API Overview
+
+
+The University Learning Dashboard exposes a RESTful API with WebSocket support for real-time features. All APIs use JSON for request/response formats and follow OpenAPI 3.0 specifications.
+
+
+### Base URL and Versioning
+- **Production**: `https://api.universitydashboard.com/v1`
+- **Staging**: `https://staging-api.universitydashboard.com/v1`
+- **Development**: `http://localhost:3000/api/v1`
+
+
+### Authentication
+All API endpoints require authentication using JWT tokens:
+```
+Authorization: Bearer <jwt-token>
+```
+
+
+### Rate Limiting
+- **Default**: 100 requests per minute per user
+- **Burst**: 200 requests per minute per user
+- **Code Execution**: 10 requests per minute per user
+- **AI Services**: 20 requests per minute per user
+
+
+Headers:
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1640995200
+```
+
+
+### API Endpoints
+
+
+#### 1. Authentication API
+
+
+##### POST /auth/login
+Authenticate user and return JWT tokens.
+
+
+**Request:**
+```json
+{
+  "email": "student@university.edu",
+  "password": "securePassword123",
+  "rememberMe": false
+}
+```
+
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": {
+    "user": {
+      "id": "uuid",
+      "email": "student@university.edu",
+      "firstName": "John",
+      "lastName": "Doe",
+      "role": "student",
+      "institutionId": "uuid"
+    },
+    "tokens": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "expiresIn": 900
+    }
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+**Error Responses:**
+- **401**: Invalid credentials
+```json
+{
+  "status": "error",
+  "error": {
+    "code": "INVALID_CREDENTIALS",
+    "message": "Invalid email or password"
+  }
+}
+```
+
+
+##### POST /auth/refresh
+Refresh access token using refresh token.
+
+
+**Request:**
+```json
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expiresIn": 900
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+#### 2. User Management API
+
+
+##### GET /users/profile
+Get current user profile.
+
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "uuid",
+    "email": "student@university.edu",
+    "firstName": "John",
+    "lastName": "Doe",
+    "role": "student",
+    "institutionId": "uuid",
+    "departmentId": "uuid",
+    "profile": {
+      "bio": "Computer Science student",
+      "interests": ["AI", "Web Development"],
+      "careerGoals": ["Software Engineer"],
+      "learningStyle": "visual",
+      "timezone": "America/New_York"
+    },
+    "preferences": {
+      "theme": "light",
+      "language": "en",
+      "notifications": {
+        "email": true,
+        "push": false,
+        "sms": false
+      }
+    },
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-01T00:00:00Z"
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+##### PUT /users/profile
+Update user profile.
+
+
+**Request:**
+```json
+{
+  "profile": {
+    "bio": "Computer Science student interested in AI",
+    "interests": ["AI", "Machine Learning", "Web Development"],
+    "careerGoals": ["Software Engineer", "AI Engineer"]
+  },
+  "preferences": {
+    "theme": "dark",
+    "notifications": {
+      "email": true,
+      "push": true,
+      "sms": false
+    }
+  }
+}
+```
+
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "uuid",
+    "email": "student@university.edu",
+    "firstName": "John",
+    "lastName": "Doe",
+    "profile": {
+      "bio": "Computer Science student interested in AI",
+      "interests": ["AI", "Machine Learning", "Web Development"],
+      "careerGoals": ["Software Engineer", "AI Engineer"]
+    },
+    "preferences": {
+      "theme": "dark",
+      "notifications": {
+        "email": true,
+        "push": true,
+        "sms": false
+      }
+    },
+    "updatedAt": "2024-01-01T00:00:00Z"
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+#### 3. Problem Library API
+
+
+##### GET /problems
+Get list of problems with filtering and pagination.
+
+
+**Request Parameters:**
+- `page`: Page number (default: 1)
+- `limit`: Items per page (default: 20, max: 100)
+- `difficulty`: Filter by difficulty (easy, medium, hard, expert)
+- `category`: Filter by category (algorithms, data-structures, etc.)
+- `language`: Filter by programming language
+- `search`: Search in title and description
+
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": {
+    "problems": [
+      {
+        "id": "uuid",
+        "title": "Two Sum",
+        "description": "Given an array of integers, return indices of the two numbers that add up to a specific target.",
+        "difficulty": "easy",
+        "category": "algorithms",
+        "language": "python",
+        "tags": ["array", "hash-table"],
+        "statistics": {
+          "attempts": 1250,
+          "successRate": 0.78,
+          "avgTime": 15.5
+        },
+        "createdAt": "2024-01-01T00:00:00Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 150,
+      "totalPages": 8
+    }
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+##### GET /problems/{id}
+Get detailed problem information.
+
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "uuid",
+    "title": "Two Sum",
+    "description": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
+    "difficulty": "easy",
+    "category": "algorithms",
+    "language": "python",
+    "tags": ["array", "hash-table"],
+    "template": "def twoSum(nums, target):\n    # Your code here\n    pass",
+    "examples": [
+      {
+        "input": "nums = [2,7,11,15], target = 9",
+        "output": "[0,1]",
+        "explanation": "Because nums[0] + nums[1] == 9, we return [0, 1]."
+      }
+    ],
+    "constraints": [
+      "2 <= nums.length <= 10^4",
+      "-10^9 <= nums[i] <= 10^9",
+      "-10^9 <= target <= 10^9",
+      "Only one valid answer exists."
+    ],
+    "statistics": {
+      "attempts": 1250,
+      "successRate": 0.78,
+      "avgTime": 15.5,
+      "userAttempts": 3,
+      "userSuccess": true
+    },
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-01T00:00:00Z"
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+#### 4. Code Execution API
+
+
+##### POST /execute
+Execute code in secure environment.
+
+
+**Request:**
+```json
+{
+  "code": "def twoSum(nums, target):\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return [seen[complement], i]\n        seen[num] = i\n    return []",
+  "language": "python",
+  "problemId": "uuid",
+  "testCases": [
+    {
+      "input": "[2,7,11,15], 9",
+      "expectedOutput": "[0,1]"
+    },
+    {
+      "input": "[3,2,4], 6",
+      "expectedOutput": "[1,2]"
+    }
+  ]
+}
+```
+
+
+**Response (202 - Accepted):**
+```json
+{
+  "status": "success",
+  "data": {
+    "executionId": "exec_123",
+    "status": "queued",
+    "estimatedTime": 5
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+##### GET /execute/{id}
+Get execution results.
+
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": {
+    "executionId": "exec_123",
+    "status": "completed",
+    "results": {
+      "output": "[0, 1]",
+      "testResults": [
+        {
+          "testCase": 1,
+          "input": "[2,7,11,15], 9",
+          "expectedOutput": "[0,1]",
+          "actualOutput": "[0, 1]",
+          "passed": true,
+          "executionTime": 0.015,
+          "memoryUsed": 5.2
+        },
+        {
+          "testCase": 2,
+          "input": "[3,2,4], 6",
+          "expectedOutput": "[1,2]",
+          "actualOutput": "[1, 2]",
+          "passed": true,
+          "executionTime": 0.012,
+          "memoryUsed": 5.1
+        }
+      ],
+      "summary": {
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "successRate": 1.0,
+        "totalTime": 0.027,
+        "avgMemory": 5.15
+      }
+    },
+    "metrics": {
+      "executionTime": 0.027,
+      "memoryUsed": 5.15,
+      "cpuTime": 0.025,
+      "containerStartTime": "2024-01-01T00:00:00Z",
+      "containerEndTime": "2024-01-01T00:00:00Z"
+    },
+    "codeAnalysis": {
+      "complexity": "O(n)",
+      "styleScore": 8.5,
+      "readability": "Good",
+      "suggestions": [
+        "Consider adding input validation",
+        "Add docstring for better documentation"
+      ]
+    }
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+#### 5. AI Interview API
+
+
+##### POST /interviews
+Start a new AI interview session.
+
+
+**Request:**
+```json
+{
+  "type": "technical",
+  "difficulty": "medium",
+  "duration": 30,
+  "focus": ["algorithms", "data-structures"],
+  "companyStyle": "google",
+  "enableVideoAnalysis": false,
+  "enableVoiceAnalysis": true
+}
+```
+
+
+**Response (201):**
+```json
+{
+  "status": "success",
+  "data": {
+    "interviewId": "int_123",
+    "type": "technical",
+    "difficulty": "medium",
+    "status": "ready",
+    "estimatedDuration": 30,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "coding",
+        "title": "Reverse Linked List",
+        "description": "Reverse a singly linked list.",
+        "timeLimit": 15,
+        "followUps": ["Can you do it iteratively?", "What about recursively?"]
+      },
+      {
+        "id": "q2",
+        "type": "conceptual",
+        "title": "Time Complexity",
+        "description": "Explain the time complexity of your solution.",
+        "timeLimit": 5
+      }
+    ],
+    "settings": {
+      "enableVideoAnalysis": false,
+      "enableVoiceAnalysis": true,
+      "realTimeFeedback": true
+    },
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+##### POST /interviews/{id}/start
+Start the interview session.
+
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": {
+    "interviewId": "int_123",
+    "status": "in_progress",
+    "currentQuestion": {
+      "id": "q1",
+      "type": "coding",
+      "title": "Reverse Linked List",
+      "startTime": "2024-01-01T00:00:00Z",
+      "timeRemaining": 900
+    },
+    "connectionDetails": {
+      "websocketUrl": "wss://api.universitydashboard.com/interview/int_123",
+      "accessToken": "interview-token"
+    }
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+##### POST /interviews/{id}/response
+Submit response to current question.
+
+
+**Request:**
+```json
+{
+  "questionId": "q1",
+  "response": {
+    "type": "code",
+    "code": "def reverseList(head):\n    prev = None\n    current = head\n    while current:\n        next_node = current.next\n        current.next = prev\n        prev = current\n        current = next_node\n    return prev",
+    "language": "python",
+    "explanation": "I use an iterative approach with three pointers to reverse the linked list in O(n) time and O(1) space."
+  },
+  "voiceData": "base64-encoded-audio-data",
+  "videoData": "base64-encoded-video-data"
+}
+```
+
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": {
+    "interviewId": "int_123",
+    "questionId": "q1",
+    "responseId": "resp_123",
+    "feedback": {
+      "technical": {
+        "correctness": 0.9,
+        "efficiency": 0.95,
+        "codeQuality": 0.85,
+        "comments": "Excellent solution with optimal time and space complexity."
+      },
+      "communication": {
+        "clarity": 0.8,
+        "confidence": 0.75,
+        "technicalAccuracy": 0.9,
+        "comments": "Good explanation, could be more confident in delivery."
+      },
+      "overall": {
+        "score": 0.85,
+        "strengths": ["Algorithm selection", "Code quality"],
+        "improvements": ["Communication confidence", "Edge case discussion"]
+      }
+    },
+    "nextQuestion": {
+      "id": "q2",
+      "type": "conceptual",
+      "title": "Time Complexity",
+      "description": "Explain the time complexity of your solution."
+    },
+    "interviewProgress": {
+      "completed": 1,
+      "total": 2,
+      "timeRemaining": 600
+    }
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+#### 6. Collaboration API
+
+
+##### POST /sessions
+Create a new collaboration session.
+
+
+**Request:**
+```json
+{
+  "name": "Study Group - Algorithms",
+  "type": "study_group",
+  "description": "Working on algorithm problems together",
+  "maxParticipants": 4,
+  "isPublic": false,
+  "settings": {
+    "enableVideo": true,
+    "enableVoice": true,
+    "recordSession": false,
+    "language": "python"
+  }
+}
+```
+
+
+**Response (201):**
+```json
+{
+  "status": "success",
+  "data": {
+    "sessionId": "sess_123",
+    "name": "Study Group - Algorithms",
+    "type": "study_group",
+    "description": "Working on algorithm problems together",
+    "createdBy": "user_123",
+    "maxParticipants": 4,
+    "currentParticipants": 1,
+    "status": "active",
+    "connectionDetails": {
+      "websocketUrl": "wss://api.universitydashboard.com/collaborate/sess_123",
+      "accessToken": "session-token"
+    },
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+##### WebSocket Events
+
+
+**Connection:**
+```javascript
+// Client connects
+const socket = io('wss://api.universitydashboard.com/collaborate/sess_123', {
+  auth: {
+    token: 'session-token'
+  }
+});
+
+
+// Server responds
+socket.on('connect', () => {
+  console.log('Connected to collaboration session');
+});
+
+
+socket.on('session_state', (data) => {
+  // Current session state
+  console.log('Session state:', data);
+});
+```
+
+
+**Events:**
+```javascript
+// User joins session
+socket.emit('user_joined', {
+  userId: 'user_456',
+  name: 'Jane Doe'
+});
+
+
+// Code changes
+socket.emit('code_change', {
+  change: {
+    type: 'insert',
+    position: { line: 5, column: 10 },
+    text: 'console.log("Hello");'
+  }
+});
+
+
+// Chat messages
+socket.emit('chat_message', {
+  message: 'Can someone help me with this part?',
+  timestamp: new Date().toISOString()
+});
+
+
+// Cursor movement
+socket.emit('cursor_move', {
+  position: { line: 10, column: 5 },
+  selection: { start: { line: 10, column: 5 }, end: { line: 12, column: 8 } }
+});
+```
+
+
+#### 7. Progress Analytics API
+
+
+##### GET /progress/{userId}
+Get user progress overview.
+
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": {
+    "userId": "user_123",
+    "overview": {
+      "totalProblemsAttempted": 45,
+      "problemsSolved": 38,
+      "successRate": 0.84,
+      "totalStudyHours": 120.5,
+      "currentStreak": 7,
+      "level": "advanced",
+      "points": 2850
+    },
+    "skills": [
+      {
+        "skillId": "algorithms",
+        "name": "Algorithms",
+        "level": 0.85,
+        "problemsSolved": 15,
+        "lastPracticed": "2024-01-01T00:00:00Z"
+      },
+      {
+        "skillId": "data-structures",
+        "name": "Data Structures",
+        "level": 0.78,
+        "problemsSolved": 12,
+        "lastPracticed": "2024-01-01T00:00:00Z"
+      }
+    ],
+    "achievements": [
+      {
+        "id": "ach_1",
+        "title": "Quick Learner",
+        "description": "Solve 10 problems in one day",
+        "earnedAt": "2024-01-01T00:00:00Z",
+        "icon": "🏆"
+      }
+    ],
+    "recentActivity": [
+      {
+        "type": "problem_solved",
+        "problemId": "prob_123",
+        "title": "Two Sum",
+        "timestamp": "2024-01-01T00:00:00Z",
+        "timeSpent": 15.5
+      }
+    ]
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+##### GET /analytics/{userId}/detailed
+Get detailed analytics for user.
+
+
+**Request Parameters:**
+- `startDate`: Start date for analytics (ISO format)
+- `endDate`: End date for analytics (ISO format)
+- `type`: Analytics type (overview, skills, progress, engagement)
+
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "data": {
+    "userId": "user_123",
+    "period": {
+      "startDate": "2024-01-01T00:00:00Z",
+      "endDate": "2024-01-31T23:59:59Z"
+    },
+    "overview": {
+      "totalSessions": 25,
+      "totalTimeSpent": 45.5,
+      "problemsAttempted": 32,
+      "problemsSolved": 28,
+      "interviewsCompleted": 5,
+      "collaborationHours": 12.3
+    },
+    "skillsProgress": [
+      {
+        "skillId": "algorithms",
+        "name": "Algorithms",
+        "startLevel": 0.75,
+        "endLevel": 0.85,
+        "improvement": 0.10,
+        "timeSpent": 15.2
+      }
+    ],
+    "engagement": {
+      "dailyActivity": [
+        {
+          "date": "2024-01-01",
+          "sessions": 2,
+          "timeSpent": 1.5,
+          "problemsSolved": 3
+        }
+      ],
+      "peakHours": [14, 15, 16, 20, 21],
+      "consistency": 0.85
+    },
+    "predictions": {
+      "nextLevelEstimate": "2024-02-15",
+      "skillGaps": ["dynamic-programming", "graph-algorithms"],
+      "recommendedFocus": "Practice more dynamic programming problems"
+    }
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+
+### Error Handling
+
+
+#### Standard Error Response Format
+```json
+{
+  "status": "error",
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human readable error message",
+    "details": {
+      "field": "Additional error details"
+    }
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z",
+    "requestId": "req_123"
+  }
+}
+```
+
+
+#### Common Error Codes
+
+
+| HTTP Status | Error Code | Description |
+|-------------|------------|-------------|
+| 400 | INVALID_REQUEST | Malformed request syntax |
+| 401 | UNAUTHORIZED | Authentication required |
+| 403 | FORBIDDEN | Insufficient permissions |
+| 404 | NOT_FOUND | Resource not found |
+| 409 | CONFLICT | Resource conflict |
+| 422 | VALIDATION_ERROR | Request validation failed |
+| 429 | RATE_LIMITED | Too many requests |
+| 500 | INTERNAL_ERROR | Server error |
+| 502 | BAD_GATEWAY | Invalid response from upstream |
+| 503 | SERVICE_UNAVAILABLE | Service temporarily unavailable |
+
+
+#### Validation Error Example
+```json
+{
+  "status": "error",
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request validation failed",
+    "details": {
+      "errors": [
+        {
+          "field": "email",
+          "message": "Email is required"
+        },
+        {
+          "field": "password",
+          "message": "Password must be at least 8 characters"
+        }
+      ]
+    }
+  },
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00Z",
+    "requestId": "req_123"
+  }
+}
+```
+
+
+---
+
+
+## Data Flow Diagrams
+
+
+### Data Processing Pipeline
+
+
+```mermaid
+graph TD
+    subgraph "Data Sources"
+        USER_INTERACTIONS[User Interactions<br/>Clicks, Submissions]
+        SYSTEM_EVENTS[System Events<br/>Logins, Errors]
+        EXTERNAL_DATA[External Data<br/>LMS, GitHub]
+        AI_INTERACTIONS[AI Interactions<br/>Interviews, Feedback]
+    end
+    
+    subgraph "Data Collection"
+        WEB_TRACKING[Web Tracking<br/>Analytics.js]
+        API_LOGS[API Logs<br/>Express Middleware]
+        EVENT_QUEUE[Event Queue<br/>Kafka/RabbitMQ]
+        EXTERNAL_APIS[External APIs<br/>Webhooks, Polling]
+    end
+    
+    subgraph "Data Processing"
+        STREAM_PROCESSING[Stream Processing<br/>Apache Flink]
+        BATCH_PROCESSING[Batch Processing<br/>Apache Spark]
+        REAL_TIME_ENGINE[Real-time Engine<br/>Node.js Workers]
+        DATA_VALIDATION[Data Validation<br/>Custom Rules]
+    end
+    
+    subgraph "Data Storage"
+        RAW_DATA[Raw Data Lake<br/>S3/Parquet]
+        PROCESSED_DATA[Processed Data<br/>PostgreSQL]
+        ANALYTICS_DB[Analytics DB<br/>TimescaleDB]
+        VECTOR_DB[Vector Database<br/>Pinecone]
+        CACHE[Cache Layer<br/>Redis]
+    end
+    
+    subgraph "Data Consumption"
+        DASHBOARDS[Dashboards<br/>Grafana, Custom]
+        API_ENDPOINTS[API Endpoints<br/>REST/GraphQL]
+        ML_MODELS[ML Models<br/>Training/Inference]
+        REPORTS[Reports<br/>PDF/Excel]
+    end
+    
+    %% Data Flow
+    USER_INTERACTIONS --> WEB_TRACKING
+    SYSTEM_EVENTS --> API_LOGS
+    EXTERNAL_DATA --> EXTERNAL_APIS
+    AI_INTERACTIONS --> EVENT_QUEUE
+    
+    WEB_TRACKING --> STREAM_PROCESSING
+    API_LOGS --> STREAM_PROCESSING
+    EVENT_QUEUE --> REAL_TIME_ENGINE
+    EXTERNAL_APIS --> BATCH_PROCESSING
+    
+    STREAM_PROCESSING --> DATA_VALIDATION
+    BATCH_PROCESSING --> DATA_VALIDATION
+    REAL_TIME_ENGINE --> DATA_VALIDATION
+    
+    DATA_VALIDATION --> RAW_DATA
+    DATA_VALIDATION --> PROCESSED_DATA
+    DATA_VALIDATION --> ANALYTICS_DB
+    DATA_VALIDATION --> VECTOR_DB
+    
+    PROCESSED_DATA --> API_ENDPOINTS
+    ANALYTICS_DB --> DASHBOARDS
+    VECTOR_DB --> ML_MODELS
+    CACHE --> API_ENDPOINTS
+    
+    RAW_DATA --> BATCH_PROCESSING
+    PROCESSED_DATA --> REPORTS
+    
+    %% Styling
+    style USER_INTERACTIONS fill:#e3f2fd
+    style WEB_TRACKING fill:#fff3e0
+    style STREAM_PROCESSING fill:#e8f5e8
+    style RAW_DATA fill:#f3e5f5
+    style DASHBOARDS fill:#fce4ec
+```
+
+
+### Real-time Event Processing Flow
+
+
+```mermaid
+graph TD
+    subgraph "Event Sources"
+        USER_ACTIONS[User Actions<br/>Code, Chat, Navigation]
+        SYSTEM_EVENTS[System Events<br/>Login, Logout, Errors]
+        EXTERNAL_WEBHOOKS[External Webhooks<br/>LMS, GitHub]
+        SCHEDULED_TASKS[Scheduled Tasks<br/>Reports, Analytics]
+    end
+    
+    subgraph "Event Ingestion"
+        API_GATEWAY[API Gateway<br/>Kong/Nginx]
+        WEB_SOCKETS[WebSockets<br/>Socket.io]
+        WEBHOOK_RECEIVER[Webhook Receiver<br/>Express.js]
+        TASK_SCHEDULER[Task Scheduler<br/>BullMQ]
+    end
+    
+    subgraph "Event Processing"
+        EVENT_ROUTER[Event Router<br/>Custom Logic]
+        VALIDATION_ENGINE[Validation Engine<br/>Schema Validation]
+        ENRICHMENT_SERVICE[Enrichment Service<br/>Data Augmentation]
+        AGGREGATION_SERVICE[Aggregation Service<br/>Real-time Aggregates]
+    end
+    
+    subgraph "Event Storage"
+        EVENT_STORE[Event Store<br/>PostgreSQL/TimescaleDB]
+        STREAMING_CACHE[Streaming Cache<br/>Redis Streams]
+        COLD_STORAGE[Cold Storage<br/>S3/Parquet]
+    end
+    
+    subgraph "Event Consumers"
+        REAL_TIME_DASHBOARDS[Real-time Dashboards<br/>WebSocket Updates]
+        NOTIFICATION_SERVICE[Notification Service<br/>Email/Push]
+        ANALYTICS_ENGINE[Analytics Engine<br/>Real-time Processing]
+        ML_INFERENCE[ML Inference<br/>Model Serving]
+    end
+    
+    subgraph "Downstream Systems"
+        DATABASES[Databases<br/>PostgreSQL Update]
+        EXTERNAL_APIS[External APIs<br/>Third-party Services]
+        DATA_LAKE[Data Lake<br/>S3/Parquet]
+    end
+    
+    %% Event Flow
+    USER_ACTIONS --> WEB_SOCKETS
+    SYSTEM_EVENTS --> API_GATEWAY
+    EXTERNAL_WEBHOOKS --> WEBHOOK_RECEIVER
+    SCHEDULED_TASKS --> TASK_SCHEDULER
+    
+    API_GATEWAY --> EVENT_ROUTER
+    WEB_SOCKETS --> EVENT_ROUTER
+    WEBHOOK_RECEIVER --> EVENT_ROUTER
+    TASK_SCHEDULER --> EVENT_ROUTER
+    
+    EVENT_ROUTER --> VALIDATION_ENGINE
+    VALIDATION_ENGINE --> ENRICHMENT_SERVICE
+    ENRICHMENT_SERVICE --> AGGREGATION_SERVICE
+    
+    AGGREGATION_SERVICE --> EVENT_STORE
+    AGGREGATION_SERVICE --> STREAMING_CACHE
+    EVENT_STORE --> COLD_STORAGE
+    
+    STREAMING_CACHE --> REAL_TIME_DASHBOARDS
+    AGGREGATION_SERVICE --> NOTIFICATION_SERVICE
+    AGGREGATION_SERVICE --> ANALYTICS_ENGINE
+    EVENT_STORE --> ML_INFERENCE
+    
+    NOTIFICATION_SERVICE --> EXTERNAL_APIS
+    ANALYTICS_ENGINE --> DATABASES
+    ML_INFERENCE --> DATA_LAKE
+    
+    %% Styling
+    style USER_ACTIONS fill:#e3f2fd
+    style API_GATEWAY fill:#fff3e0
+    style EVENT_ROUTER fill:#e8f5e8
+    style EVENT_STORE fill:#f3e5f5
+    style REAL_TIME_DASHBOARDS fill:#fce4ec
+    style DATABASES fill:#e0f2f1
+```
+
+
+### State Transition Diagram - User Session
+
+
+```mermaid
+stateDiagram-v2
+    [*] --> Anonymous
+    Anonymous --> Authenticating: Start Login
+    Authenticating --> Authenticated: Login Success
+    Authenticating --> Anonymous: Login Failed
+    Authenticating --> AccountLocked: Too Many Attempts
+    
+    Authenticated --> ActiveSession: Session Start
+    ActiveSession --> InactiveSession: Timeout
+    InactiveSession --> ActiveSession: User Activity
+    ActiveSession --> SessionExpired: Session Timeout
+    InactiveSession --> SessionExpired: Extended Timeout
+    
+    Authenticated --> PasswordReset: Forgot Password
+    PasswordReset --> Authenticated: Password Updated
+    PasswordReset --> Anonymous: Cancel Reset
+    
+    ActiveSession --> CollaborationMode: Start Collaboration
+    CollaborationMode --> ActiveSession: End Collaboration
+    
+    ActiveSession --> InterviewMode: Start Interview
+    InterviewMode --> ActiveSession: End Interview
+    
+    ActiveSession --> CodeExecution: Execute Code
+    CodeExecution --> ActiveSession: Execution Complete
+    
+    SessionExpired --> Anonymous: Session Clear
+    AccountLocked --> Anonymous: Admin Unlock
+    
+    state Anonymous {
+        [*] --> Browsing
+        Browsing --> ViewingProblems
+        ViewingProblems --> Browsing
+    }
+    
+    state Authenticated {
+        [*] --> Dashboard
+        Dashboard --> Profile
+        Profile --> Dashboard
+        Dashboard --> Problems
+        Problems --> Dashboard
+    }
+    
+    state ActiveSession {
+        [*] --> Idle
+        Idle --> Coding
+        Coding --> Idle
+        Idle --> Learning
+        Learning --> Idle
+    }
+    
+    state CollaborationMode {
+        [*] --> Host
+        Host --> Participant
+        Participant --> Host
+    }
+    
+    state InterviewMode {
+        [*] --> Question1
+        Question1 --> Question2
+        Question2 --> Question3
+        Question3 --> Completed
+    }
+```
+
+
+---
+
+
+## Security Architecture Details
+
+
+### Threat Model Analysis
+
+
+#### Identified Threats and Mitigation Strategies
+
+
+| Threat Category | Specific Threat | Likelihood | Impact | Mitigation Strategy |
+|-----------------|----------------|------------|--------|-------------------|
+| **Authentication** | Credential stuffing | Medium | High | Multi-factor authentication, rate limiting, anomaly detection |
+| **Authorization** | Privilege escalation | Low | High | Role-based access control, principle of least privilege, regular audits |
+| **Data Security** | Data breach | Medium | High | Encryption at rest and in transit, data minimization, access controls |
+| **Code Execution** | Container escape | Low | Critical | Secure container configuration, resource limits, sandboxing |
+| **API Security** | Injection attacks | Medium | High | Input validation, parameterized queries, output encoding |
+| **Denial of Service** | Resource exhaustion | Medium | Medium | Rate limiting, resource quotas, auto-scaling |
+| **Privacy** | Unauthorized data access | Low | High | Data anonymization, access logging, consent management |
+| **Compliance** | Regulatory violations | Low | Critical | Compliance automation, regular audits, documentation |
+
+
+### Security Controls Implementation
+
+
+#### 1. Authentication Security
+
+
+```yaml
+authentication_security:
+  multi_factor_authentication:
+    methods:
+      - totp: Time-based one-time passwords
+      - sms: SMS verification (fallback)
+      - email: Email verification (fallback)
+    enforcement:
+      - Required for all admin accounts
+      - Optional for student accounts
+      - Triggered for suspicious login attempts
+  
+  password_policy:
+    complexity:
+      min_length: 12
+      require_uppercase: true
+      require_lowercase: true
+      require_numbers: true
+      require_special_chars: true
+      prevent_reuse: 5
+    expiration:
+      days: 90
+      grace_period: 7
+    lockout:
+      max_attempts: 5
+      lockout_duration: 15
+    reset:
+      token_expiry: 24
+      force_change_on_first_login: false
+  
+  session_management:
+    token:
+      algorithm: HS256
+      expiry:
+        access_token: 15 minutes
+        refresh_token: 7 days
+      signing_key_rotation: 30 days
+    storage:
+      http_only: true
+      secure: true
+      same_site: strict
+    concurrency:
+      max_sessions_per_user: 3
+      revoke_on_password_change: true
+```
+
+
+#### 2. Authorization Security
+
+
+```yaml
+authorization_security:
+  role_based_access_control:
+    roles:
+      - student
+      - professor
+      - admin
+      - career_services
+      - system_admin
+    permissions:
+      student:
+        - view_problems
+        - execute_code
+        - view_progress
+        - join_collaboration
+      professor:
+        - all_student_permissions
+        - create_problems
+        - view_student_progress
+        - manage_courses
+      admin:
+        - all_professor_permissions
+        - manage_users
+        - system_configuration
+        - view_analytics
+      career_services:
+        - all_student_permissions
+        - view_career_analytics
+        - manage_job_postings
+      system_admin:
+        - all_permissions
+    
+  attribute_based_access_control:
+    attributes:
+      - department
+      - institution
+      - course_enrollment
+      - time_restrictions
+    policies:
+      - "Allow professors to view progress only for students in their courses"
+      - "Allow students to join collaboration only within their institution"
+      - "Restrict admin access to business hours only"
+```
+
+
+#### 3. Data Security
+
+
+```yaml
+data_security:
+  encryption:
+    at_rest:
+      algorithm: AES-256
+      key_management: AWS KMS
+      data_classification:
+        public: no encryption
+        internal: encrypted
+        confidential: encrypted + key rotation
+        restricted: encrypted + key rotation + access logging
+    in_transit:
+      tls_version: 1.3
+      cipher_suites:
+        - TLS_AES_256_GCM_SHA384
+        - TLS_CHACHA20_POLY1305_SHA256
+      certificate_management:
+        provider: AWS ACM
+        auto_renewal: true
+        monitoring: true
+  
+  data_access_control:
+    principle_of_least_privilege: true
+    access_review:
+      frequency: quarterly
+      automated: true
+    audit_logging:
+      all_access_attempts: true
+      data_modification: true
+      retention_period: 365 days
+    data_masking:
+      sensitive_fields:
+        - email
+        - phone
+        - address
+        - date_of_birth
+      masking_type: partial
+  
+  backup_and_recovery:
+    backup_strategy:
+      frequency: daily
+      retention: 30 days
+      encryption: true
+      offsite: true
+    recovery:
+      rpo: 24 hours
+      rto: 4 hours
+      testing: quarterly
+    disaster_recovery:
+      geo_redundancy: true
+      failover: automatic
+      testing: biannual
+```
+
+
+#### 4. Code Execution Security
+
+
+```yaml
+code_execution_security:
+  container_security:
+    base_image: Alpine Linux minimal
+    non_root_user: true
+    read_only_filesystem: true
+    tmpfs_mounts:
+      - /tmp: size=100m
+      - /run: size=10m
+    security_options:
+      - no-new-privileges
+      - no-suid
+      - no-devices
+      - seccomp=strict
+    resource_limits:
+      cpu: "1"
+      memory: "512m"
+      pids: 100
+      processes: 10
+      timeout: 10
+  
+  network_security:
+    isolation: true
+    external_access: false
+    allowed_ports: []
+    dns_resolution: false
+    proxy_configuration: none
+  
+  runtime_security:
+    sandbox_profile:
+      syscalls:
+        allow:
+          - read
+          - write
+          - open
+          - close
+          - exit
+          - getpid
+          - kill
+        deny: all
+      file_system:
+        read_only: true
+        writable_paths:
+          - /tmp
+        hidden_paths:
+          - /proc
+          - /sys
+          - /dev
+    malware_detection:
+      signature_based: true
+      behavioral_analysis: true
+      heuristics: true
+    monitoring:
+      resource_usage: true
+      system_calls: true
+      network_activity: true
+      file_access: true
+```
+
+
+#### 5. API Security
+
+
+```yaml
+api_security:
+  input_validation:
+    schema_validation: true
+    type_checking: true
+    length_limits: true
+    pattern_matching: true
+    sanitization:
+      sql_injection: true
+      xss: true
+      command_injection: true
+      path_traversal: true
+  
+  output_encoding:
+    json_encoding: true
+    html_encoding: true
+    url_encoding: true
+    content_type: application/json
+  
+  rate_limiting:
+    default:
+      requests: 100
+      window: 60s
+    endpoints:
+      /api/v1/execute:
+        requests: 10
+        window: 60s
+      /api/v1/interviews:
+        requests: 20
+        window: 60s
+    strategy: sliding_window
+    storage: redis
+  
+  api_gateway_security:
+    authentication:
+      required: true
+      methods:
+        - jwt
+        - oauth2
+    authorization:
+      required: true
+      method: rbac
+    cors:
+      enabled: true
+      allowed_origins:
+        - https://app.universitydashboard.com
+        - https://admin.universitydashboard.com
+      allowed_methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+    headers:
+      security:
+        - X-Content-Type-Options: nosniff
+        - X-Frame-Options: DENY
+        - X-XSS-Protection: 1; mode=block
+        - Strict-Transport-Security: max-age=31536000; includeSubDomains
+        - Content-Security-Policy: default-src 'self'
+```
+
+
+### Compliance Requirements
+
+
+#### GDPR Compliance
+
+
+```yaml
+gdpr_compliance:
+  data_subject_rights:
+    right_to_access: true
+    right_to_rectification: true
+    right_to_erasure: true
+    right_to_restrict_processing: true
+    right_to_data_portability: true
+    right_to_object: true
+    right_to_not_be_subject_to_automated_decision: true
+  
+  data_protection_officer:
+    designated: true
+    contact: dpo@universitydashboard.com
+    responsibilities:
+      - monitoring compliance
+      - training staff
+      - conducting audits
+      - liaison with authorities
+  
+  data_breach_notification:
+    detection: 72 hours
+    notification:
+      - affected_users
+      - supervisory_authority
+    procedures:
+      - containment
+      - assessment
+      - notification
+      - prevention
+  
+  international_data_transfers:
+    mechanism: Standard Contractual Clauses
+    countries:
+      - EU: allowed
+      - US: with SCCs
+      - others: case-by-case
+```
+
+
+#### FERPA Compliance
+
+
+```yaml
+ferpa_compliance:
+  educational_records:
+    definition: |
+      Any information directly related to a student that is maintained by
+      the institution or an agent of the institution
+    covered_data:
+      - personal_identification
+      - academic_performance
+      - progress_data
+      - interview_records
+      - collaboration_history
+  
+  student_rights:
+    right_to_inspect: true
+    right_to_challenge: true
+    right_to_prevent_disclosure: true
+    right_to_request_amendment: true
+  
+  data_disclosure:
+    directory_information:
+      opt_in: true
+      includes:
+        - name
+        - institution
+        - major
+        - graduation_year
+    third_party_disclosure:
+      - require_consent: true
+      - exceptions:
+        - school officials
+        - studies
+        - accrediting organizations
+        - health_safety_emergency
+  
+  record_retention:
+    student_records: 5 years after graduation
+    financial_records: 7 years
+    application_records: 1 year
+    destruction_method: secure_erase
+```
+
+
+### Security Monitoring and Incident Response
+
+
+```yaml
+security_monitoring:
+  continuous_monitoring:
+    tools:
+      - prometheus: metrics_collection
+      - grafana: visualization
+      - elasticsearch: log_aggregation
+      - kibana: log_analysis
+      - sentry: error_tracking
+    metrics:
+      - authentication_success_rate
+      - authentication_failure_rate
+      - api_error_rate
+      - resource_utilization
+      - suspicious_activities
+  
+  incident_response:
+    phases:
+      preparation:
+        - incident_response_team
+        - communication_plan
+        - documentation
+        - training
+      detection:
+        - monitoring_alerts
+        - user_reports
+        - security_scans
+        - threat_intelligence
+      analysis:
+        - impact_assessment
+        - root_cause_analysis
+        - evidence_preservation
+        - containment_strategy
+      containment:
+        - isolation
+        - access_revocation
+        - patching
+        - backup_restoration
+      eradication:
+        - malware_removal
+        - vulnerability_patching
+        - configuration_changes
+        - system_rebuild
+      recovery:
+        - system_restoration
+        - data_recovery
+        - validation
+        - monitoring
+      lessons_learned:
+        - documentation
+        - process_improvement
+        - training_updates
+        - tool_upgrades
+  
+  security_testing:
+    penetration_testing:
+      frequency: quarterly
+      scope: full_application
+      methodology:
+        - owasp_top_10
+        - custom_threat_models
+      reporting:
+        - executive_summary
+        - technical_findings
+        - remediation_plan
+    vulnerability_scanning:
+      frequency: weekly
+      tools:
+        - nessus
+        - owasp_zap
+        - snyk
+      coverage:
+        - infrastructure
+        - applications
+        - dependencies
+    code_review:
+      automated: true
+      manual: true
+      frequency: per_commit
+      tools:
+        - sonarqube
+        - github_advanced_security
+        - custom_rules
+```
+
+
+---
+
+
+## Performance Specifications
+
+
+### SLA Definitions
+
+
+#### Service Level Agreements
+
+
+| Service | Metric | Target | Measurement Period | Penalty |
+|---------|--------|---------|-------------------|---------|
+| **API Availability** | Uptime | 99.9% | Monthly | Service credit |
+| **API Response Time** | p50 < 100ms | 95% | Daily | N/A |
+| **API Response Time** | p95 < 500ms | 99% | Daily | N/A |
+| **API Response Time** | p99 < 1000ms | 99.9% | Daily | N/A |
+| **Code Execution** | Success Rate | 99% | Daily | Service credit |
+| **Code Execution** | Start Time < 2s | 95% | Daily | N/A |
+| **Real-time Features** | Latency < 100ms | 99% | Real-time | N/A |
+| **Database Queries** | p95 < 50ms | 99% | Daily | N/A |
+| **Page Load Time** | p95 < 3s | 95% | Daily | N/A |
+| **WebSocket Uptime** | Uptime | 99.5% | Monthly | Service credit |
+
+
+#### Performance Targets by Component
+
+
+```yaml
+performance_targets:
+  frontend:
+    page_load:
+      initial_load: < 3s (95th percentile)
+      subsequent_loads: < 1s (95th percentile)
+    interactivity:
+      first_input_delay: < 100ms (95th percentile)
+      time_to_interactive: < 5s (95th percentile)
+    bundle_size:
+      main_bundle: < 1MB
+      lazy_loaded_chunks: < 300KB
+    runtime_performance:
+      javascript_execution: < 100ms (95th percentile)
+      rendering: < 16ms per frame (95th percentile)
+  
+  backend:
+    api_response:
+      simple_endpoints: < 100ms (95th percentile)
+      complex_endpoints: < 500ms (95th percentile)
+      ai_endpoints: < 2000ms (95th percentile)
+    throughput:
+      requests_per_second: 1000 (sustained)
+      peak_burst: 5000 (5 minutes)
+    database:
+      query_time: < 50ms (95th percentile)
+      connection_pool: < 10ms wait time
+    error_rate:
+      http_5xx: < 0.1%
+      http_4xx: < 1%
+  
+  real_time:
+    websocket_latency:
+      message_delivery: < 100ms (99th percentile)
+      connection_establishment: < 500ms (95th percentile)
+    collaboration:
+      code_sync_latency: < 100ms (99th percentile)
+      cursor_sync_latency: < 50ms (99th percentile)
+    scaling:
+      concurrent_connections: 10000
+      messages_per_second: 100000
+  
+  ai_services:
+    response_time:
+      interview_feedback: < 5000ms (95th percentile)
+      code_review: < 3000ms (95th percentile)
+      recommendations: < 1000ms (95th percentile)
+    accuracy:
+      interview_scoring: > 90% accuracy
+      code_review_accuracy: > 85% accuracy
+      recommendation_relevance: > 80% relevance
+    cost_efficiency:
+      token_optimization: > 30% reduction
+      caching_hit_rate: > 70%
+```
+
+
+### Capacity Planning
+
+
+#### Resource Requirements Based on Expected Load
+
+
+```yaml
+capacity_planning:
+  user_growth_projections:
+    year_1:
+      total_users: 50000
+      monthly_active_users: 25000
+      daily_active_users: 5000
+      concurrent_users: 500
+    year_2:
+      total_users: 150000
+      monthly_active_users: 75000
+      daily_active_users: 15000
+      concurrent_users: 1500
+    year_3:
+      total_users: 300000
+      monthly_active_users: 150000
+      daily_active_users: 30000
+      concurrent_users: 3000
+  
+  resource_requirements:
+    compute:
+      cpu_cores:
+        year_1: 32
+        year_2: 96
+        year_3: 192
+      memory_gb:
+        year_1: 64
+        year_2: 192
+        year_3: 384
+      storage_gb:
+        year_1: 500
+        year_2: 1500
+        year_3: 3000
+    database:
+      cpu_cores:
+        year_1: 8
+        year_2: 16
+        year_3: 32
+      memory_gb:
+        year_1: 32
+        year_2: 64
+        year_3: 128
+      storage_gb:
+        year_1: 200
+        year_2: 600
+        year_3: 1200
+      iops:
+        year_1: 3000
+        year_2: 9000
+        year_3: 18000
+    network:
+      bandwidth_mbps:
+        year_1: 100
+        year_2: 300
+        year_3: 600
+      concurrent_connections:
+        year_1: 5000
+        year_2: 15000
+        year_3: 30000
+  
+  load_testing:
+    scenarios:
+      - name: "Peak Usage"
+        users: 5000 concurrent
+        duration: 1 hour
+        ramp_up: 10 minutes
+        success_criteria:
+          - error_rate < 1%
+          - avg_response_time < 500ms
+          - cpu_utilization < 80%
+      - name: "Sustained Load"
+        users: 1000 concurrent
+        duration: 24 hours
+        success_criteria:
+          - no_memory_leaks
+          - stable_performance
+          - error_rate < 0.5%
+      - name: "Spike Test"
+        users: 10000 concurrent
+        duration: 10 minutes
+        success_criteria:
+          - system_stability
+          - graceful_degradation
+          - auto_scaling_effectiveness
+```
+
+
+### Scalability Strategies
+
+
+#### Horizontal Scaling
+
+
+```yaml
+horizontal_scaling:
+  microservices_architecture:
+    independently_scalable_services:
+      - user_management_service
+      - problem_library_service
+      - progress_tracking_service
+      - code_execution_service
+      - collaboration_service
+      - ai_services
+    scaling_triggers:
+      - cpu_utilization > 70%
+      - memory_utilization > 80%
+      - request_queue_depth > 100
+      - response_time > 1000ms
+  
+  auto_scaling:
+    kubernetes_horizontal_pod_autoscaler:
+      min_replicas: 2
+      max_replicas: 20
+      target_cpu_utilization: 70%
+      target_memory_utilization: 80%
+      scale_down_stabilization: 300
+      scale_up_stabilization: 60
+    
+    database_read_replicas:
+      primary: 1
+      read_replicas:
+        year_1: 2
+        year_2: 4
+        year_3: 8
+      connection_pool:
+        max_connections: 100
+        idle_timeout: 300
+    
+    caching_layer:
+      redis_cluster:
+        nodes:
+          year_1: 3
+          year_2: 6
+          year_3: 12
+        memory_per_node: 16GB
+        eviction_policy: allkeys-lru
+```
+
+
+#### Vertical Scaling
+
+
+```yaml
+vertical_scaling:
+  resource_allocation:
+    service_tiers:
+      small:
+        cpu: 0.5 vCPU
+        memory: 1GB
+        services: [user_management, problem_library]
+      medium:
+        cpu: 1 vCPU
+        memory: 2GB
+        services: [progress_tracking, collaboration]
+      large:
+        cpu: 2 vCPU
+        memory: 4GB
+        services: [code_execution]
+      xlarge:
+        cpu: 4 vCPU
+        memory: 8GB
+        services: [ai_services]
+    
+    database_tiers:
+      small:
+        cpu: 2 vCPU
+        memory: 8GB
+        storage: 100GB
+      medium:
+        cpu: 4 vCPU
+        memory: 16GB
+        storage: 500GB
+      large:
+        cpu: 8 vCPU
+        memory: 32GB
+        storage: 1TB
+```
+
+
+#### Performance Optimization
+
+
+```yaml
+performance_optimization:
+  caching_strategies:
+    application_cache:
+      redis:
+        ttl:
+          user_data: 3600
+          problems: 86400
+          analytics: 300
+        eviction_policy: allkeys-lru
+        compression: true
+    database_cache:
+      query_cache:
+        size: 1GB
+        ttl: 300
+      read_replicas:
+        cache_hit_ratio_target: 0.8
+    cdn_cache:
+      static_assets:
+        ttl: 86400
+        compression: gzip
+      api_responses:
+        ttl: 300
+        vary_by_user: true
+  
+  database_optimization:
+    indexing_strategy:
+      primary_keys: always_indexed
+      foreign_keys: indexed
+      query_patterns: analyzed_indexing
+      composite_indexes: selective
+    query_optimization:
+      query_analysis: explain_analyze
+      slow_query_threshold: 100ms
+      connection_pooling: true
+    partitioning:
+      large_tables:
+        - user_progress (by user_id)
+        - learning_analytics (by timestamp)
+        - execution_results (by date)
+  
+  frontend_optimization:
+    code_splitting:
+      route_based: true
+      component_based: true
+      lazy_loading: true
+    bundle_optimization:
+      tree_shaking: true
+      minification: true
+      compression: true
+    rendering_optimization:
+      virtualization: large_lists
+      memoization: pure_components
+      debouncing: user_inputs
+```
+
+
+---
+
+
+## Infrastructure Specifications
+
+
+### Infrastructure as Code
+
+
+#### Terraform Configuration
+
+
+```hcl
+# main.tf
+terraform {
+  required_version = ">= 1.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
+  }
+}
+
+
+# Provider configuration
+provider "aws" {
+  region = var.aws_region
+  default_tags {
+    tags = {
+      Project     = "university-dashboard"
+      Environment = var.environment
+      ManagedBy   = "Terraform"
+    }
+  }
+}
+
+
+# Variables
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = "us-east-1"
+}
+
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  validation {
+    condition     = contains(["development", "staging", "production"], var.environment)
+    error_message = "Environment must be one of: development, staging, production"
+  }
+}
+
+
+variable "vpc_cidr" {
+  description = "VPC CIDR block"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+
+# Networking
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "3.14.0"
+
+
+  name = "university-dashboard-${var.environment}"
+  cidr = var.vpc_cidr
+
+
+  azs             = ["us-east-1a", "us-east-1b", "us-east-1c"]
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+
+
+  enable_nat_gateway   = true
+  single_nat_gateway   = true
+  enable_dns_hostnames = true
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+# ECS Cluster
+resource "aws_ecs_cluster" "main" {
+  name = "university-dashboard-${var.environment}"
+
+
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+# Application Load Balancer
+resource "aws_lb" "app" {
+  name               = "university-dashboard-${var.environment}"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.lb.id]
+  subnets            = module.vpc.public_subnets
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+resource "aws_security_group" "lb" {
+  name        = "university-dashboard-lb-${var.environment}"
+  description = "Allow HTTP/HTTPS traffic"
+  vpc_id      = module.vpc.vpc_id
+
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+# Target Group
+resource "aws_lb_target_group" "app" {
+  name        = "university-dashboard-${var.environment}"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = module.vpc.vpc_id
+  target_type = "ip"
+
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+    timeout            = 5
+    interval           = 30
+    path               = "/health"
+    matcher            = "200-299"
+  }
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+# RDS Database
+resource "aws_db_subnet_group" "main" {
+  name       = "university-dashboard-${var.environment}"
+  subnet_ids = module.vpc.private_subnets
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+resource "aws_security_group" "rds" {
+  name        = "university-dashboard-rds-${var.environment}"
+  description = "Allow RDS traffic"
+  vpc_id      = module.vpc.vpc_id
+
+
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ecs_tasks.id]
+  }
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+resource "aws_db_instance" "main" {
+  identifier           = "university-dashboard-${var.environment}"
+  engine               = "postgres"
+  engine_version       = "15.4"
+  instance_class       = "db.t3.large"
+  allocated_storage    = 100
+  storage_type         = "gp3"
+  db_name              = "university_dashboard"
+  username             = "admin"
+  password             = var.db_password
+  db_subnet_group_name = aws_db_subnet_group.main.name
+  vpc_security_group_ids = [aws_security_group.rds.id]
+  multi_az             = true
+  storage_encrypted    = true
+  backup_retention_period = 7
+  backup_window        = "04:00-05:00"
+  maintenance_window  = "sun:05:00-sun:06:00"
+  skip_final_snapshot  = var.environment == "development"
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+# ElastiCache Redis
+resource "aws_elasticache_subnet_group" "redis" {
+  name        = "university-dashboard-redis-${var.environment}"
+  subnet_ids = module.vpc.private_subnets
+}
+
+
+resource "aws_security_group" "redis" {
+  name        = "university-dashboard-redis-${var.environment}"
+  description = "Allow Redis traffic"
+  vpc_id      = module.vpc.vpc_id
+
+
+  ingress {
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ecs_tasks.id]
+  }
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+resource "aws_elasticache_replication_group" "redis" {
+  description          = "University Dashboard Redis Cluster"
+  replication_group_id = "university-dashboard-${var.environment}"
+  node_type            = "cache.r6g.large"
+  port                 = 6379
+  parameter_group_name = aws_elasticache_parameter_group.redis.name
+  subnet_group_name    = aws_elasticache_subnet_group.redis.name
+  security_group_ids   = [aws_security_group.redis.id]
+  automatic_failover_enabled = true
+  num_cache_clusters  = 3
+  multi_az_enabled    = true
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+# ECS Task Definitions
+resource "aws_iam_role" "ecs_task_execution" {
+  name = "university-dashboard-ecs-task-execution-${var.environment}"
+
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  }
+}
+
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+
+resource "aws_security_group" "ecs_tasks" {
+  name        = "university-dashboard-ecs-tasks-${var.environment}"
+  description = "Allow ECS tasks to communicate"
+  vpc_id      = module.vpc.vpc_id
+
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+# Frontend Service
+resource "aws_ecs_task_definition" "frontend" {
+  family                   = "university-dashboard-frontend-${var.environment}"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task_execution.arn
+
+
+  container_definitions = jsonencode([
+    {
+      name  = "frontend"
+      image = "${aws_ecr_repository.frontend.repository_url}:latest"
+      portMappings = [
+        {
+          containerPort = 80
+          protocol      = "tcp"
+        }
+      ]
+      environment = [
+        {
+          name  = "NODE_ENV"
+          value = var.environment
+        },
+        {
+          name  = "API_URL"
+          value = "https://api.${var.domain}"
+        }
+      ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/university-dashboard-frontend"
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+    }
+  ])
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+# API Gateway Service
+resource "aws_ecs_task_definition" "api" {
+  family                   = "university-dashboard-api-${var.environment}"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "512"
+  memory                   = "1024"
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task_execution.arn
+
+
+  container_definitions = jsonencode([
+    {
+      name  = "api"
+      image = "${aws_ecr_repository.api.repository_url}:latest"
+      portMappings = [
+        {
+          containerPort = 3000
+          protocol      = "tcp"
+        }
+      ]
+      environment = [
+        {
+          name  = "NODE_ENV"
+          value = var.environment
+        },
+        {
+          name  = "DATABASE_URL"
+          value = "postgresql://admin:${var.db_password}@${aws_db_instance.main.endpoint}/university_dashboard"
+        },
+        {
+          name  = "REDIS_URL"
+          value = "${aws_elasticache_replication_group.redis.primary_endpoint_address}:6379"
+        },
+        {
+          name  = "JWT_SECRET"
+          value = var.jwt_secret
+        }
+      ]
+      secrets = [
+        {
+          name      = "OPENAI_API_KEY"
+          valueFrom = "arn:aws:secretsmanager:us-east-1:123456789012:secret:OpenAI-API-Key-abc123"
+        }
+      ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/university-dashboard-api"
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+    }
+  ])
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+# ECS Services
+resource "aws_ecs_service" "frontend" {
+  name            = "university-dashboard-frontend-${var.environment}"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.frontend.arn
+  desired_count   = var.environment == "production" ? 3 : 1
+  launch_type     = "FARGATE"
+
+
+  network_configuration {
+    subnets          = module.vpc.private_subnets
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    assign_public_ip = false
+  }
+
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.app.arn
+    container_name   = "frontend"
+    container_port   = 80
+  }
+
+
+  depends_on = [aws_lb_listener.app]
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+resource "aws_ecs_service" "api" {
+  name            = "university-dashboard-api-${var.environment}"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.api.arn
+  desired_count   = var.environment == "production" ? 6 : 2
+  launch_type     = "FARGATE"
+
+
+  network_configuration {
+    subnets          = module.vpc.private_subnets
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    assign_public_ip = false
+  }
+
+
+  depends_on = [aws_db_instance.main, aws_elasticache_replication_group.redis]
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+# CloudFront Distribution
+resource "aws_cloudfront_distribution" "app" {
+  origin {
+    domain_name = aws_lb.app.dns_name
+    origin_id   = "alb"
+
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+
+  enabled             = true
+  is_ipv6_enabled     = true
+  comment             = "University Dashboard CloudFront Distribution"
+  default_root_object = "index.html"
+
+
+  default_cache_behavior {
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "alb"
+
+
+    forwarded_values {
+      query_string = false
+      headers      = ["*"]
+      cookies     = ["*"]
+    }
+
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 3600
+    max_ttl                = 86400
+  }
+
+
+  price_class = "PriceClass_100"
+
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+# Route 53
+resource "aws_route53_zone" "main" {
+  name = var.domain
+}
+
+
+resource "aws_route53_record" "app" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = var.domain
+  type    = "A"
+
+
+  alias {
+    name                   = aws_cloudfront_distribution.app.domain_name
+    zone_id                = aws_cloudfront_distribution.app.hosted_zone_id
+    evaluate_target_health = true
+  }
+}
+
+
+resource "aws_route53_record" "api" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "api.${var.domain}"
+  type    = "CNAME"
+  ttl     = 300
+  records = [aws_lb.app.dns_name]
+}
+
+
+# Outputs
+output "vpc_id" {
+  value = module.vpc.vpc_id
+}
+
+
+output "ecs_cluster_id" {
+  value = aws_ecs_cluster.main.id
+}
+
+
+output "rds_endpoint" {
+  value = aws_db_instance.main.endpoint
+}
+
+
+output "redis_endpoint" {
+  value = aws_elasticache_replication_group.redis.primary_endpoint_address
+}
+
+
+output "cloudfront_domain" {
+  value = aws_cloudfront_distribution.app.domain_name
+}
+
+
+output "alb_dns_name" {
+  value = aws_lb.app.dns_name
+}
+```
+
+
+### Network Architecture
+
+
+#### VPC and Subnet Configuration
+
+
+```yaml
+network_architecture:
+  vpc_configuration:
+    cidr_block: 10.0.0.0/16
+    enable_dns_support: true
+    enable_dns_hostnames: true
+    tenancy: default
+    
+  subnets:
+    public_subnets:
+      - cidr: 10.0.101.0/24
+        az: us-east-1a
+        availability: high
+        route_table: public
+        nat_gateway: true
+      - cidr: 10.0.102.0/24
+        az: us-east-1b
+        availability: high
+        route_table: public
+        nat_gateway: false
+      - cidr: 10.0.103.0/24
+        az: us-east-1c
+        availability: high
+        route_table: public
+        nat_gateway: false
+    
+    private_subnets:
+      - cidr: 10.0.1.0/24
+        az: us-east-1a
+        availability: high
+        route_table: private
+        nat_gateway: true
+      - cidr: 10.0.2.0/24
+        az: us-east-1b
+        availability: high
+        route_table: private
+        nat_gateway: true
+      - cidr: 10.0.3.0/24
+        az: us-east-1c
+        availability: high
+        route_table: private
+        nat_gateway: true
+    
+    database_subnets:
+      - cidr: 10.0.11.0/24
+        az: us-east-1a
+        availability: high
+        route_table: database
+      - cidr: 10.0.12.0/24
+        az: us-east-1b
+        availability: high
+        route_table: database
+      - cidr: 10.0.13.0/24
+        az: us-east-1c
+        availability: high
+        route_table: database
+  
+  security_groups:
+    alb_security_group:
+      name: university-dashboard-alb
+      description: "Load balancer security group"
+      ingress:
+        - from_port: 80
+          to_port: 80
+          protocol: tcp
+          cidr_blocks: ["0.0.0.0/0"]
+        - from_port: 443
+          to_port: 443
+          protocol: tcp
+          cidr_blocks: ["0.0.0.0/0"]
+      egress:
+        - from_port: 0
+          to_port: 0
+          protocol: "-1"
+          cidr_blocks: ["0.0.0.0/0"]
+    
+    ecs_security_group:
+      name: university-dashboard-ecs
+      description: "ECS tasks security group"
+      ingress:
+        - from_port: 80
+          to_port: 80
+          protocol: tcp
+          security_groups: ["alb_security_group"]
+        - from_port: 3000
+          to_port: 3000
+          protocol: tcp
+          security_groups: ["alb_security_group"]
+      egress:
+        - from_port: 0
+          to_port: 0
+          protocol: "-1"
+          cidr_blocks: ["0.0.0.0/0"]
+    
+    rds_security_group:
+      name: university-dashboard-rds
+      description: "RDS database security group"
+      ingress:
+        - from_port: 5432
+          to_port: 5432
+          protocol: tcp
+          security_groups: ["ecs_security_group"]
+      egress:
+        - from_port: 0
+          to_port: 0
+          protocol: "-1"
+          cidr_blocks: ["0.0.0.0/0"]
+    
+    redis_security_group:
+      name: university-dashboard-redis
+      description: "Redis security group"
+      ingress:
+        - from_port: 6379
+          to_port: 6379
+          protocol: tcp
+          security_groups: ["ecs_security_group"]
+      egress:
+        - from_port: 0
+          to_port: 0
+          protocol: "-1"
+          cidr_blocks: ["0.0.0.0/0"]
+  
+  network_acls:
+    public_nacl:
+      name: university-dashboard-public-nacl
+      vpc_id: vpc_id
+      ingress:
+        - rule_no: 100
+          action: allow
+          cidr_block: 0.0.0.0/0
+          from_port: 80
+          to_port: 80
+          protocol: tcp
+        - rule_no: 110
+          action: allow
+          cidr_block: 0.0.0.0/0
+          from_port: 443
+          to_port: 443
+          protocol: tcp
+        - rule_no: 120
+          action: allow
+          cidr_block: 0.0.0.0/0
+          from_port: 1024
+          to_port: 65535
+          protocol: tcp
+        - rule_no: 130
+          action: allow
+          cidr_block: 0.0.0.0/0
+          from_port: 1024
+          to_port: 65535
+          protocol: udp
+      egress:
+        - rule_no: 100
+          action: allow
+          cidr_block: 0.0.0.0/0
+          from_port: 0
+          to_port: 65535
+          protocol: "-1"
+    
+    private_nacl:
+      name: university-dashboard-private-nacl
+      vpc_id: vpc_id
+      ingress:
+        - rule_no: 100
+          action: allow
+          cidr_block: 10.0.0.0/16
+          from_port: 0
+          to_port: 65535
+          protocol: "-1"
+      egress:
+        - rule_no: 100
+          action: allow
+          cidr_block: 10.0.0.0/16
+          from_port: 0
+          to_port: 65535
+          protocol: "-1"
+```
+
+
+### Storage Architecture
+
+
+#### Database Storage Configuration
+
+
+```yaml
+storage_architecture:
+  databases:
+    postgresql_primary:
+      engine: PostgreSQL 15.4
+      instance_class: db.t3.large
+      allocated_storage: 100 GB
+      storage_type: gp3
+      iops: 3000
+      throughput: 125 MB/s
+      multi_az: true
+      backup_retention: 7 days
+      maintenance_window: sun:05:00-sun:06:00
+      backup_window: 04:00-05:00
+      encryption: true
+      performance_insights: true
+      enhanced_monitoring: true
+    
+    postgresql_read_replicas:
+      count: 2
+      instance_class: db.t3.large
+      promotion_tier: 1
+      storage_type: gp3
+      iops: 3000
+    
+    timescaledb:
+      extension: true
+      hypertable_configuration:
+        chunk_time_interval: 1 day
+        compression: true
+        compression_algorithm: columnar
+        retention_policy: 30 days
+  
+  caching:
+    redis_cluster:
+      mode: cluster
+      node_type: cache.r6g.large
+      num_cache_clusters: 3
+      num_cache_nodes: 6
+      automatic_failover: true
+      multi_az_enabled: true
+      at_rest_encryption: true
+      transit_encryption: true
+      auth_token: true
+      engine_version: 6.x
+      parameter_group:
+        cluster-enabled: yes
+        save: ""
+        appendonly: yes
+        appendfsync: everysec
+        timeout: 300
+        tcp-keepalive: 60
+        tcp-keepalive-interval: 10
+        maxmemory-policy: allkeys-lru
+  
+  object_storage:
+    s3_buckets:
+      assets:
+        name: university-dashboard-assets
+        versioning: true
+        encryption: AES-256
+        lifecycle_rules:
+          - id: transition_to_ia
+            status: enabled
+            transitions:
+              - days: 30
+                storage_class: STANDARD_IA
+              - days: 90
+                storage_class: GLACIER
+          - id: expiration
+            status: enabled
+            expiration:
+              days: 365
+        cors_configuration:
+          allowed_headers: ["*"]
+          allowed_methods: ["GET", "HEAD"]
+          allowed_origins: ["*"]
+          max_age_seconds: 3000
+        website_configuration:
+          index_document: index.html
+          error_document: error.html
+        logging:
+          target_bucket: university-dashboard-logs
+          target_prefix: assets/
+    
+    backups:
+      name: university-dashboard-backups
+      versioning: true
+      encryption: AES-256
+      lifecycle_rules:
+        - id: transition_to_glacier
+          status: enabled
+          transitions:
+            - days: 30
+              storage_class: GLACIER
+            - days: 90
+              storage_class: DEEP_ARCHIVE
+        - id: expiration
+          status: enabled
+          expiration:
+            days: 2555
+      replication_configuration:
+        rules:
+          - id: backup-replication
+            status: enabled
+            destination:
+              bucket: university-dashboard-backups-dr
+              storage_class: STANDARD
+              account: "123456789012"
+    
+    logs:
+      name: university-dashboard-logs
+      versioning: false
+      encryption: AES-256
+      lifecycle_rules:
+        - id: log_retention
+          status: enabled
+          expiration:
+            days: 90
+  
+  file_storage:
+    efs:
+      name: university-dashboard-efs
+      performance_mode: general_purpose
+      throughput_mode: bursting
+      encryption: true
+      lifecycle_policies:
+        - transition_to_ia: after 30 days
+        - transition_to_glacier: after 90 days
+      backup:
+        enabled: true
+        frequency: daily
+        retention: 30 days
+    mount_targets:
+      - subnet_id: subnet-12345678
+        ip_address: 10.0.1.100
+      - subnet_id: subnet-87654321
+        ip_address: 10.0.2.100
+      - subnet_id: subnet-11223344
+        ip_address: 10.0.3.100
+```
+
+
+### Backup and Disaster Recovery
+
+
+```yaml
+backup_and_disaster_recovery:
+  backup_strategy:
+    database_backups:
+      automated_backups:
+        enabled: true
+        retention_period: 7 days
+        backup_window: "04:00-05:00"
+        copy_tags_to_snapshot: true
+      manual_snapshots:
+        retention: 30 days
+        encryption: true
+      point_in_time_recovery:
+        enabled: true
+        retention: 7 days
+    file_system_backups:
+      efs_backups:
+        enabled: true
+        frequency: daily
+        retention: 30 days
+        compression: true
+        encryption: true
+      application_backups:
+        enabled: true
+        frequency: daily
+        retention: 14 days
+        compression: true
+        encryption: true
+    configuration_backups:
+      terraform_state:
+        versioning: true
+        state_locking: true
+        remote_backend: s3
+      secrets_management:
+        rotation_frequency: 90 days
+        encryption: true
+        access_logging: true
+  
+  disaster_recovery:
+    rpo_rto:
+      rpo: 24 hours
+      rto: 4 hours
+      critical_services:
+        - api: rpo=1h, rto=30m
+        - database: rpo=15m, rto=1h
+        - authentication: rpo=1h, rto=30m
+    
+    multi_region_deployment:
+      primary_region: us-east-1
+      dr_region: us-west-2
+      services:
+        - api: active-passive
+        - database: active-passive
+        - storage: active-passive
+        - cache: active-active
+      failover:
+        automated: true
+        dns_failover: true
+        health_checks: true
+        testing_frequency: quarterly
+    
+    data_replication:
+      database:
+        method: logical replication
+        lag_time: < 5 minutes
+        encryption: in-transit and at-rest
+      storage:
+        method: cross-region replication
+        replication_time: < 15 minutes
+        encryption: in-transit and at-rest
+      cache:
+        method: multi-region cluster
+        replication_time: < 1 second
+        encryption: in-transit and at-rest
+    
+    recovery_procedures:
+      failover_process:
+        1. Monitor health checks
+        2. Detect failure
+        3. Initiate failover
+        4. Update DNS
+        5. Verify services
+        6. Communicate status
+      failback_process:
+        1. Monitor primary region
+        2. Verify health
+        3. Initiate sync
+        4. Switch traffic
+        5. Update DNS
+        6. Verify services
+      testing:
+        frequency: quarterly
+        scope: full failover test
+        duration: 4 hours
+        notification: 72 hours advance notice
+```
+
+
+### Monitoring and Logging
+
+
+```yaml
+monitoring_and_logging:
+  monitoring:
+    metrics_collection:
+      prometheus:
+        scrape_interval: 15s
+        evaluation_interval: 15s
+        retention: 30 days
+      custom_metrics:
+        - api_requests_total
+        - api_response_time_seconds
+        - database_connections_active
+        - redis_operations_total
+        - code_execution_success_rate
+        - user_sessions_active
+        - collaboration_sessions_active
+        - interview_sessions_active
+    
+    alerting:
+      alertmanager:
+        config_file: alertmanager.yml
+        retention: 7 days
+      alert_rules:
+        - name: HighErrorRate
+          expression: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High error rate detected"
+            description: "Error rate is {{ $value }} errors per second"
+        
+        - name: HighResponseTime
+          expression: histogram_quantile(0.95, http_response_time_seconds) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High response time detected"
+            description: "95th percentile response time is {{ $value }} seconds"
+        
+        - name: DatabaseConnectionsHigh
+          expression: pg_stat_database_numbackends > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High database connections"
+            description: "Database has {{ $value }} active connections"
+        
+        - name: CodeExecutionFailureRate
+          expression: rate(code_executions_total{status="failed"}[5m]) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High code execution failure rate"
+            description: "Code execution failure rate is {{ $value }}%"
+    
+    dashboards:
+      grafana:
+        data_sources:
+          - prometheus
+          - cloudwatch
+          - elasticsearch
+        dashboards:
+          - name: System Overview
+            panels:
+              - CPU Usage
+              - Memory Usage
+              - Disk Usage
+              - Network Traffic
+          - name: Application Performance
+            panels:
+              - API Response Time
+              - Error Rate
+              - Throughput
+              - Active Users
+          - name: Database Performance
+            panels:
+              - Query Performance
+              - Connection Count
+              - Cache Hit Rate
+              - Replication Lag
+          - name: Business Metrics
+            panels:
+              - User Growth
+              - Engagement Metrics
+              - Learning Progress
+              - Success Rates
+  
+  logging:
+    log_aggregation:
+      elasticsearch:
+        cluster_size: 3 nodes
+        storage: 100GB per node
+        retention: 30 days
+        sharding: 5 shards
+        replicas: 1
+      log_shippers:
+        - fluentd
+        - logstash
+        - cloudwatch_logs
+    
+    log_sources:
+      application_logs:
+        format: json
+        level: info
+        fields:
+          - timestamp
+          - level
+          - service
+          - trace_id
+          - user_id
+          - request_id
+          - method
+          - path
+          - status_code
+          - response_time
+          - user_agent
+          - ip_address
+      access_logs:
+        format: combined
+        fields:
+          - timestamp
+          - remote_addr
+          - remote_user
+          - request
+          - status
+          - bytes_sent
+          - http_referer
+          - http_user_agent
+      security_logs:
+        format: json
+        level: info
+        fields:
+          - timestamp
+          - event_type
+          - user_id
+          - ip_address
+          - user_agent
+          - action
+          - result
+          - details
+    
+    log_retention:
+      application_logs: 30 days
+      access_logs: 90 days
+      security_logs: 365 days
+      audit_logs: 7 years
+      backup_logs: 365 days
+    
+    log_analysis:
+      kibana:
+        dashboards:
+          - Application Logs
+          - Security Events
+          - Error Analysis
+          - Performance Analysis
+        saved_searches:
+          - 5xx Errors
+          - Authentication Failures
+          - Slow Queries
+          - Security Events
+      machine_learning:
+        anomaly_detection: true
+        pattern_analysis: true
+        alerting: true
+```
+
+
+---
+
+
+## Appendices
+
+
+### Appendix A: Glossary
+
+
+| Term | Definition |
+|------|------------|
+| **API Gateway** | A server that acts as an API front-end, receiving API requests, enforcing throttling and security policies, and passing requests to the backend service |
+| **Containerization** | Packaging an application with its dependencies into a standardized unit for software development |
+| **Docker** | A platform for developing, shipping, and running applications in containers |
+| **ECS** | Amazon Elastic Container Service, a highly scalable container orchestration service |
+| **Fargate** | A serverless compute engine for containers that removes the need to manage servers |
+| **JWT** | JSON Web Token, a compact URL-safe means of representing claims to be transferred between two parties |
+| **Kubernetes** | An open-source container orchestration platform for automating deployment, scaling, and management |
+| **Microservices** | An architectural style that structures an application as a collection of loosely coupled services |
+| **Monaco Editor** | A code editor that powers VS Code, licensed under the MIT License |
+| **PostgreSQL** | A powerful, open source object-relational database system |
+| **Redis** | An open source, in-memory data structure store, used as a database, cache, and message broker |
+| **Socket.io** | A JavaScript library for real-time web applications |
+| **Terraform** | An infrastructure as code software tool that enables you to safely and predictably build, change, and version infrastructure |
+
+
+### Appendix B: Acronyms
+
+
+| Acronym | Full Form |
+|---------|------------|
+| **API** | Application Programming Interface |
+| **CDN** | Content Delivery Network |
+| **CI/CD** | Continuous Integration/Continuous Deployment |
+| **CRUD** | Create, Read, Update, Delete |
+| **CSS** | Cascading Style Sheets |
+| **DNS** | Domain Name System |
+| **DOM** | Document Object Model |
+| **DOS** | Denial of Service |
+| **ECS** | Elastic Container Service |
+| **EFS** | Elastic File System |
+| **ELB** | Elastic Load Balancer |
+| **EOL** | End of Life |
+| **HTTP** | Hypertext Transfer Protocol |
+| **HTTPS** | Hypertext Transfer Protocol Secure |
+| **IaC** | Infrastructure as Code |
+| **IDE** | Integrated Development Environment |
+| **JSON** | JavaScript Object Notation |
+| **JWT** | JSON Web Token |
+| **KPI** | Key Performance Indicator |
+| **K8s** | Kubernetes |
+| **LB** | Load Balancer |
+| **NAT** | Network Address Translation |
+| **NoSQL** | Not Only SQL |
+| **ORM** | Object-Relational Mapping |
+| **POC** | Proof of Concept |
+| **RDS** | Relational Database Service |
+| **REST** | Representational State Transfer |
+| **RTO** | Recovery Time Objective |
+| **RPO** | Recovery Point Objective |
+| **S3** | Simple Storage Service |
+| **SLA** | Service Level Agreement |
+| **SQL** | Structured Query Language |
+| **SSH** | Secure Shell |
+| **SSL** | Secure Sockets Layer |
+| **TTL** | Time to Live |
+| **UI** | User Interface |
+| **UX** | User Experience |
+| **VPC** | Virtual Private Cloud |
+| **WAF** | Web Application Firewall |
+| **XML** | eXtensible Markup Language |
+| **YAML** | YAML Ain't Markup Language |
+
+
+### Appendix C: References
+
+
+1. **AWS Documentation**: https://docs.aws.amazon.com/
+2. **React Documentation**: https://reactjs.org/docs/
+3. **Node.js Documentation**: https://nodejs.org/docs/
+4. **PostgreSQL Documentation**: https://www.postgresql.org/docs/
+5. **Redis Documentation**: https://redis.io/documentation
+6. **Docker Documentation**: https://docs.docker.com/
+7. **Kubernetes Documentation**: https://kubernetes.io/docs/
+8. **Terraform Documentation**: https://developer.hashicorp.com/terraform/docs
+9. **OpenAI API Documentation**: https://platform.openai.com/docs/
+10. **Socket.io Documentation**: https://socket.io/docs/
+11. **Monaco Editor Documentation**: https://microsoft.github.io/monaco-editor/
+12. **Material-UI Documentation**: https://mui.com/material-ui/
+13. **Prometheus Documentation**: https://prometheus.io/docs/
+14. **Grafana Documentation**: https://grafana.com/docs/
+15. **Elasticsearch Documentation**: https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
+
+
+### Appendix D: Environmental Variables Configuration
+
+
+```yaml
+# Environment Variables Configuration
+environment_variables:
+  development:
+    NODE_ENV: development
+    PORT: 3000
+    DATABASE_URL: postgresql://admin:password@localhost:5432/university_dashboard_dev
+    REDIS_URL: redis://localhost:6379
+    JWT_SECRET: dev-jwt-secret-key
+    OPENAI_API_KEY: your-openai-api-key
+    CORS_ORIGIN: http://localhost:3000
+    LOG_LEVEL: debug
+    ENABLE_DEV_TOOLS: true
+  
+  staging:
+    NODE_ENV: staging
+    PORT: 3000
+    DATABASE_URL: postgresql://admin:password@staging-db:5432/university_dashboard_staging
+    REDIS_URL: redis://staging-redis:6379
+    JWT_SECRET: staging-jwt-secret-key
+    OPENAI_API_KEY: your-openai-api-key
+    CORS_ORIGIN: https://staging.universitydashboard.com
+    LOG_LEVEL: info
+    ENABLE_DEV_TOOLS: false
+  
+  production:
+    NODE_ENV: production
+    PORT: 3000
+    DATABASE_URL: postgresql://admin:${DB_PASSWORD}@${DB_HOST}:5432/university_dashboard_prod
+    REDIS_URL: redis://${REDIS_HOST}:6379
+    JWT_SECRET: ${JWT_SECRET}
+    OPENAI_API_KEY: ${OPENAI_API_KEY}
+    CORS_ORIGIN: https://universitydashboard.com
+    LOG_LEVEL: warn
+    ENABLE_DEV_TOOLS: false
+```
+
+
+---
+
+
+## Conclusion
+
+
+This comprehensive technical architecture document provides a complete specification for the University Learning Dashboard, covering all aspects from high-level system design to detailed implementation specifications. The architecture is designed to be secure, scalable, and performant while supporting the complex requirements of an educational platform with AI-powered features, real-time collaboration, and comprehensive analytics.
+
+
+The document includes:
+
+
+1. **Visual Architecture Diagrams** showing system context, container relationships, component interactions, deployment topology, and sequence flows
+2. **Detailed API Specifications** with complete OpenAPI documentation, request/response schemas, error handling, and rate limiting
+3. **Data Flow Diagrams** illustrating data processing pipelines, real-time event handling, and state transitions
+4. **Security Architecture Details** including threat modeling, security controls, and compliance requirements
+5. **Performance Specifications** with SLA definitions, capacity planning, and scalability strategies
+6. **Infrastructure Specifications** with Terraform configurations, network architecture, storage design, and disaster recovery
+
+
+This architecture provides a solid foundation for developing and deploying the University Learning Dashboard while ensuring security, performance, and scalability requirements are met.
