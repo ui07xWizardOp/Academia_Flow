@@ -183,9 +183,9 @@ export default function Problems() {
                   difficulty={problem.difficulty as "easy" | "medium" | "hard"}
                   topics={problem.topics}
                   companies={problem.companies || []}
-                  leetcodeId={problem.leetcodeId}
-                  acceptanceRate={problem.acceptanceRate}
-                  premium={problem.premium}
+                  leetcodeId={problem.leetcodeId || undefined}
+                  acceptanceRate={problem.acceptanceRate || undefined}
+                  premium={problem.premium || false}
                   onSolve={handleSolveProblem}
                 />
               ))}
