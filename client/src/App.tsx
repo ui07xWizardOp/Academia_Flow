@@ -11,6 +11,8 @@ import Problems from "@/pages/problems";
 import CodeEditor from "@/pages/code-editor";
 import ProgressPage from "@/pages/progress";
 import Interviews from "@/pages/interviews";
+import StudyGroups from "@/pages/study-groups";
+import Settings from "@/pages/settings";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -65,6 +67,16 @@ function Router() {
       <Route path="/interviews">
         <ProtectedRoute>
           <Interviews />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/study-groups">
+        <ProtectedRoute>
+          <StudyGroups />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute>
+          <Settings />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />

@@ -6,7 +6,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Code, MessageCircle, Clock, AlertCircle, CheckCircle, XCircle } from "lucide-react";
@@ -108,6 +108,9 @@ export default function Interviews() {
                     <DialogContent>
                       <DialogHeader>
                         <DialogTitle>Start Technical Interview</DialogTitle>
+                        <DialogDescription>
+                          Practice coding problems with real-time AI feedback and evaluation.
+                        </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
                         <p className="text-gray-600">
@@ -169,6 +172,9 @@ export default function Interviews() {
                     <DialogContent>
                       <DialogHeader>
                         <DialogTitle>Start Behavioral Interview</DialogTitle>
+                        <DialogDescription>
+                          Practice behavioral questions and improve your interview communication skills.
+                        </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
                         <p className="text-gray-600">

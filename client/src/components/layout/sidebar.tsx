@@ -78,8 +78,8 @@ export function Sidebar() {
             return (
               <li key={item.name}>
                 <Link href={item.href}>
-                  <a
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${
+                  <div
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors cursor-pointer ${
                       isActive
                         ? "text-primary bg-primary/10"
                         : "text-gray-600 hover:bg-gray-50"
@@ -88,7 +88,7 @@ export function Sidebar() {
                   >
                     <Icon className="w-5 h-5" />
                     <span>{item.name}</span>
-                  </a>
+                  </div>
                 </Link>
               </li>
             );
@@ -100,10 +100,10 @@ export function Sidebar() {
       <div className="p-4 border-t border-gray-200">
         <div className="space-y-2">
           <Link href="/settings">
-            <a className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-600 hover:bg-gray-50">
+            <div className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-600 hover:bg-gray-50 cursor-pointer">
               <Settings className="w-5 h-5" />
               <span>Settings</span>
-            </a>
+            </div>
           </Link>
           <Button
             variant="ghost"
