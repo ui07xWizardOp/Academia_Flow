@@ -16,7 +16,10 @@ import {
   Plus, 
   Mic,
   Book,
-  AlertCircle
+  AlertCircle,
+  Brain,
+  Target,
+  TrendingUp
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -39,6 +42,12 @@ export default function Dashboard() {
     enabled: !!user?.id,
   });
 
+  // Fetch AI-powered recommendations
+  const { data: recommendations = [], isLoading: recommendationsLoading } = useQuery({
+    queryKey: ['/api/recommendations/user', user?.id],
+    enabled: !!user?.id,
+  });
+
   // Calculate statistics
   const completedProblems = userProgress.filter(p => p.completed).length;
   const totalAttempts = userProgress.reduce((sum, p) => sum + (p.attempts || 0), 0);
@@ -48,7 +57,7 @@ export default function Dashboard() {
 
   const recentSubmissions = userSubmissions.slice(0, 3);
 
-  if (progressLoading || submissionsLoading || interviewsLoading) {
+  if (progressLoading || submissionsLoading || interviewsLoading || recommendationsLoading) {
     return (
       <div className="flex h-screen">
         <Sidebar />
@@ -257,6 +266,87 @@ export default function Dashboard() {
                   </Button>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* AI-Powered Recommendations */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Brain className="w-5 h-5 text-purple-500" />
+                <span>AI-Powered Recommendations</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {recommendations.length > 0 ? (
+                <div className="space-y-4">
+                  {recommendations.slice(0, 3).map((rec: any, index: number) => (
+                    <div key={index} className="p-4 border rounded-lg bg-gradient-to-r from-purple-50 to-blue-50">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Badge className={
+                              rec.type === 'problem' ? 'bg-blue-100 text-blue-800' :
+                              rec.type === 'topic' ? 'bg-green-100 text-green-800' :
+                              'bg-purple-100 text-purple-800'
+                            }>
+                              {rec.type === 'problem' ? 'Problem' : 
+                               rec.type === 'topic' ? 'Topic' : 'Skill'}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {rec.difficulty}
+                            </Badge>
+                          </div>
+                          <h4 className="font-semibold text-gray-900 mb-1">{rec.title}</h4>
+                          <p className="text-sm text-gray-600 mb-2">{rec.description}</p>
+                          <div className="flex items-center text-xs text-gray-500 space-x-4">
+                            <div className="flex items-center space-x-1">
+                              <Target className="w-3 h-3" />
+                              <span>Success Rate: {rec.expectedSuccessRate}%</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <TrendingUp className="w-3 h-3" />
+                              <span>Skill Growth: +{rec.skillGrowth}%</span>
+                            </div>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          onClick={() => {
+                            if (rec.type === 'problem') {
+                              setLocation(`/code-editor?problem=${rec.id}`);
+                            } else {
+                              setLocation(`/problems?filter=${rec.category}`);
+                            }
+                          }}
+                          className="bg-purple-600 hover:bg-purple-700 text-white ml-4"
+                        >
+                          {rec.type === 'problem' ? 'Solve' : 'Explore'}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="text-center pt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setLocation('/analytics')}
+                      className="text-purple-600 border-purple-600 hover:bg-purple-50"
+                    >
+                      View Detailed Analytics
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Brain className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 mb-4">Complete more problems to get personalized AI recommendations!</p>
+                  <Button onClick={() => setLocation('/problems')} className="bg-purple-600 hover:bg-purple-700">
+                    Start Solving Problems
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -13,6 +13,9 @@ import ProgressPage from "@/pages/progress";
 import Interviews from "@/pages/interviews";
 import StudyGroups from "@/pages/study-groups";
 import Settings from "@/pages/settings";
+import AIInterview from "@/pages/ai-interview";
+import Collaboration from "@/pages/collaboration";
+import Analytics from "@/pages/analytics";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -77,6 +80,21 @@ function Router() {
       <Route path="/settings">
         <ProtectedRoute>
           <Settings />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/ai-interview">
+        <ProtectedRoute>
+          <AIInterview />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/collaboration">
+        <ProtectedRoute>
+          <Collaboration />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/analytics">
+        <ProtectedRoute>
+          <Analytics />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />

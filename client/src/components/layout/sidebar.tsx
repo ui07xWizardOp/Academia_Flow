@@ -11,6 +11,9 @@ import {
   Users,
   Settings,
   LogOut,
+  Bot,
+  UserCheck,
+  BarChart3
 } from "lucide-react";
 
 const navigation = [
@@ -19,6 +22,9 @@ const navigation = [
   { name: "Code Editor", href: "/code-editor", icon: Code },
   { name: "Progress", href: "/progress", icon: TrendingUp },
   { name: "Mock Interviews", href: "/interviews", icon: Mic },
+  { name: "AI Interview", href: "/ai-interview", icon: Bot },
+  { name: "Collaboration", href: "/collaboration", icon: UserCheck },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Study Groups", href: "/study-groups", icon: Users },
 ];
 

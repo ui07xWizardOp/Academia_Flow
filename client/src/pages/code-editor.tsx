@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Play, Send, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Play, Send, CheckCircle, XCircle, BarChart3, Users, Lightbulb } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -49,6 +49,7 @@ export default function CodeEditorPage() {
   const [code, setCode] = useState(defaultCode.python);
   const [testResults, setTestResults] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("console");
+  const [qualityReport, setQualityReport] = useState<any>(null);
 
   // Get problem ID from URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -109,6 +110,11 @@ export default function CodeEditorPage() {
       // Invalidate relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/submissions/user', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['/api/progress/user', user?.id] });
+      
+      // Auto-analyze code quality after successful submission
+      if (data.status === "accepted") {
+        analyzeCodeQuality();
+      }
     },
     onError: () => {
       toast({
@@ -118,6 +124,37 @@ export default function CodeEditorPage() {
       });
     },
   });
+
+  // Code quality analysis mutation
+  const analyzeCodeMutation = useMutation({
+    mutationFn: async ({ code, language, problemId }: { code: string; language: string; problemId?: string }) => {
+      const response = await apiRequest("POST", "/api/code/analyze", {
+        code,
+        language,
+        problemId: problemId ? parseInt(problemId) : undefined,
+      });
+      return response.json();
+    },
+    onSuccess: (report) => {
+      setQualityReport(report);
+      setActiveTab("quality");
+      toast({
+        title: "Code Analysis Complete",
+        description: `Quality Score: ${report.overallScore}/100 (Grade ${report.grade})`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Analysis failed",
+        description: "Failed to analyze code quality.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const analyzeCodeQuality = () => {
+    analyzeCodeMutation.mutate({ code, language, problemId: problemId || undefined });
+  };
 
   useEffect(() => {
     if (problem && problem.starterCode) {
@@ -328,6 +365,7 @@ export default function CodeEditorPage() {
                 <TabsList className="bg-gray-700">
                   <TabsTrigger value="console" className="text-xs" data-testid="tab-console">Console</TabsTrigger>
                   <TabsTrigger value="test-cases" className="text-xs" data-testid="tab-test-cases">Test Cases</TabsTrigger>
+                  <TabsTrigger value="quality" className="text-xs" data-testid="tab-quality">Quality Analysis</TabsTrigger>
                 </TabsList>
               </div>
               
@@ -368,6 +406,111 @@ export default function CodeEditorPage() {
                     </div>
                   ) : (
                     <p className="text-xs text-gray-500">No test cases available.</p>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="quality" className="h-full p-3 overflow-auto">
+                  {qualityReport ? (
+                    <div className="space-y-3">
+                      {/* Quality Score Header */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className={`text-lg font-bold ${
+                            qualityReport.grade === 'A' ? 'text-green-400' :
+                            qualityReport.grade === 'B' ? 'text-blue-400' :
+                            qualityReport.grade === 'C' ? 'text-yellow-400' :
+                            'text-red-400'
+                          }`}>
+                            Grade {qualityReport.grade}
+                          </div>
+                          <div className="text-sm text-gray-400">
+                            {qualityReport.overallScore}/100
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={analyzeCodeQuality}
+                          disabled={analyzeCodeMutation.isPending}
+                          className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-6"
+                        >
+                          {analyzeCodeMutation.isPending ? "Analyzing..." : "Re-analyze"}
+                        </Button>
+                      </div>
+
+                      {/* Key Metrics */}
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <div className="text-gray-400">Lines of Code</div>
+                          <div className="text-white">{qualityReport.metrics?.linesOfCode || 0}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-400">Complexity</div>
+                          <div className="text-white">{qualityReport.metrics?.cyclomaticComplexity || 0}</div>
+                        </div>
+                      </div>
+
+                      {/* Issues */}
+                      {qualityReport.issues && qualityReport.issues.length > 0 && (
+                        <div>
+                          <div className="text-xs font-semibold text-gray-300 mb-2">Issues Found:</div>
+                          <div className="space-y-1 max-h-20 overflow-y-auto">
+                            {qualityReport.issues.slice(0, 5).map((issue: any, index: number) => (
+                              <div key={index} className={`text-xs flex items-center space-x-2 ${
+                                issue.severity === 'high' ? 'text-red-400' :
+                                issue.severity === 'medium' ? 'text-yellow-400' :
+                                'text-blue-400'
+                              }`}>
+                                {issue.severity === 'high' ? <XCircle className="w-3 h-3" /> :
+                                 issue.severity === 'medium' ? <CheckCircle className="w-3 h-3" /> :
+                                 <Lightbulb className="w-3 h-3" />}
+                                <span>{issue.message}</span>
+                                {issue.line && <span className="text-gray-500">:{issue.line}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Strengths */}
+                      {qualityReport.strengths && qualityReport.strengths.length > 0 && (
+                        <div>
+                          <div className="text-xs font-semibold text-green-400 mb-1">Strengths:</div>
+                          <div className="text-xs text-gray-300">
+                            {qualityReport.strengths.slice(0, 2).join(', ')}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Recommendations */}
+                      {qualityReport.recommendations && qualityReport.recommendations.length > 0 && (
+                        <div>
+                          <div className="text-xs font-semibold text-blue-400 mb-1">Tips:</div>
+                          <div className="text-xs text-gray-300">
+                            {qualityReport.recommendations.slice(0, 2).join(', ')}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Comparison */}
+                      {qualityReport.comparison && (
+                        <div className="text-xs text-gray-400">
+                          Better than {qualityReport.comparison.betterThan}% of submissions
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-center">
+                      <BarChart3 className="w-8 h-8 text-gray-500 mb-2" />
+                      <p className="text-xs text-gray-500 mb-3">No quality analysis yet</p>
+                      <Button
+                        size="sm"
+                        onClick={analyzeCodeQuality}
+                        disabled={analyzeCodeMutation.isPending}
+                        className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                      >
+                        {analyzeCodeMutation.isPending ? "Analyzing..." : "Analyze Code Quality"}
+                      </Button>
+                    </div>
                   )}
                 </TabsContent>
               </div>
