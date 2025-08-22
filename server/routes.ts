@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { codeExecutor } from "./code-executor";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { insertUserSchema, insertSubmissionSchema, insertInterviewSessionSchema } from "@shared/schema";
@@ -149,24 +150,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user.id,
       });
 
-      // TODO: Execute code in Docker container here
-      // For now, we'll simulate execution results
-      const simulatedResult = {
-        status: "accepted",
-        runtime: 52,
-        memory: 14200,
-        testsPassed: 2,
-        totalTests: 2,
+      // Execute code with all test cases for submission
+      let executionResult: {
+        status: string;
+        runtime: number;
+        memory: number;
+        testsPassed: number;
+        totalTests: number;
+      } = {
+        status: "runtime_error",
+        runtime: 0,
+        memory: 0,
+        testsPassed: 0,
+        totalTests: 0,
       };
+
+      try {
+        // Get problem for test cases
+        const problem = await storage.getProblem(submissionData.problemId);
+        if (!problem) {
+          throw new Error("Problem not found");
+        }
+
+        const testCases = problem.testCases as any[] || [];
+        
+        if (testCases.length === 0) {
+          // If no test cases, just execute the code
+          const result = await codeExecutor.executeCode({
+            code: submissionData.code,
+            language: submissionData.language,
+            timeLimit: 10000, // 10 seconds for submission
+            memoryLimit: 256 // 256 MB
+          });
+          
+          executionResult = {
+            status: result.exitCode === 0 ? "accepted" : "runtime_error",
+            runtime: result.runtime,
+            memory: result.memory,
+            testsPassed: result.exitCode === 0 ? 1 : 0,
+            totalTests: 1,
+          };
+        } else {
+          // Execute with all test cases
+          const result = await codeExecutor.executeWithTestCases({
+            code: submissionData.code,
+            language: submissionData.language,
+            testCases,
+            timeLimit: 10000,
+            memoryLimit: 256
+          });
+
+          executionResult = {
+            status: result.allPassed ? "accepted" : 
+                   result.results.some(r => r.error?.includes("Time limit")) ? "time_limit_exceeded" :
+                   result.results.some(r => r.exitCode !== 0) ? "runtime_error" : 
+                   "wrong_answer",
+            runtime: Math.max(...result.results.map(r => r.runtime)),
+            memory: Math.max(...result.results.map(r => r.memory)),
+            testsPassed: result.results.filter(r => r.exitCode === 0 && !r.error).length,
+            totalTests: result.results.length,
+          };
+        }
+      } catch (error) {
+        console.error('Submission execution error:', error);
+        executionResult = {
+          status: "compilation_error",
+          runtime: 0,
+          memory: 0,
+          testsPassed: 0,
+          totalTests: 0,
+        };
+      }
 
       const submission = await storage.createSubmission({
         ...submissionData,
-        ...simulatedResult,
+        ...executionResult,
       });
 
       // Update user progress
       await storage.updateUserProgress(req.user.id, submissionData.problemId, {
-        completed: simulatedResult.status === "accepted",
+        completed: executionResult.status === "accepted",
         attempts: 1, // This should increment existing attempts
       });
 
@@ -250,24 +313,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Code execution route (stubbed for now)
+  // Code execution route
   app.post("/api/code/execute", authenticateToken, async (req: any, res) => {
     try {
       const { code, language, problemId } = req.body;
       
-      // TODO: Implement Docker-based code execution
-      // For now, return simulated results
-      const result = {
-        stdout: "Test output",
-        stderr: "",
-        exitCode: 0,
-        runtime: Math.floor(Math.random() * 100) + 20,
-        memory: Math.floor(Math.random() * 5000) + 10000,
-      };
+      // Get problem details for test cases if available
+      let testCases: any[] | undefined;
+      if (problemId) {
+        const problem = await storage.getProblem(parseInt(problemId));
+        if (problem && problem.testCases) {
+          testCases = problem.testCases as any[];
+        }
+      }
+
+      // Execute code with Docker
+      const result = await codeExecutor.executeCode({
+        code,
+        language,
+        testCases: testCases?.slice(0, 3), // Limit to first 3 test cases for "Run Code"
+        timeLimit: 5000, // 5 seconds
+        memoryLimit: 128 // 128 MB
+      });
 
       res.json(result);
     } catch (error) {
-      res.status(500).json({ message: "Code execution failed" });
+      console.error('Code execution error:', error);
+      res.status(500).json({ 
+        message: "Code execution failed",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Enhanced progress tracking route
+  app.get("/api/progress/user/:userId/detailed", authenticateToken, async (req: any, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Users can only view their own detailed progress unless they're professors/admins
+      if (req.user.id !== userId && req.user.role === 'student') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { progressTracker } = await import("./progress-tracker");
+      const detailedProgress = await progressTracker.calculateUserProgress(userId);
+      const recommendations = await progressTracker.getRecommendations(userId);
+      const ranking = await progressTracker.getUserRanking(userId);
+
+      res.json({
+        ...detailedProgress,
+        recommendations,
+        ranking
+      });
+    } catch (error) {
+      console.error('Detailed progress error:', error);
+      res.status(500).json({ message: "Server error" });
     }
   });
 

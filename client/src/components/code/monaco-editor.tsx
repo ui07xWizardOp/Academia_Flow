@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import Editor, { OnMount } from "@monaco-editor/react";
 
 interface MonacoEditorProps {
   value: string;
@@ -8,54 +9,131 @@ interface MonacoEditorProps {
 }
 
 export function MonacoEditor({ value, onChange, language, height = "100%" }: MonacoEditorProps) {
-  const editorRef = useRef<HTMLTextAreaElement>(null);
-  const editorInstanceRef = useRef<any>(null);
+  const editorRef = useRef<any>(null);
 
-  useEffect(() => {
-    // This is a placeholder for Monaco Editor integration
-    // In a real implementation, you would:
-    // 1. Load Monaco Editor from CDN or npm package
-    // 2. Initialize the editor with proper configuration
-    // 3. Set up language-specific features
-    
-    console.log("Monaco Editor would be initialized here");
-    console.log("Language:", language);
-    console.log("Initial value:", value);
+  const handleEditorDidMount: OnMount = (editor, monaco) => {
+    editorRef.current = editor;
 
-    // Cleanup function
-    return () => {
-      if (editorInstanceRef.current) {
-        editorInstanceRef.current.dispose();
-      }
-    };
-  }, []);
+    // Configure editor settings
+    editor.updateOptions({
+      fontSize: 14,
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      automaticLayout: true,
+      tabSize: 2,
+      insertSpaces: true,
+      wordWrap: "on",
+      lineNumbers: "on",
+      renderLineHighlight: "line",
+      selectOnLineNumbers: true,
+      matchBrackets: "always",
+      theme: "vs-dark"
+    });
 
-  useEffect(() => {
-    if (editorInstanceRef.current) {
-      // Update editor language when it changes
-      console.log("Changing language to:", language);
+    // Add custom keybindings for common actions
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+      // This could trigger code execution
+      console.log("Ctrl/Cmd + Enter pressed - could trigger code execution");
+    });
+
+    // Set up auto-completion and IntelliSense based on language
+    monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+      noSemanticValidation: false,
+      noSyntaxValidation: false,
+    });
+
+    monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+      target: monaco.languages.typescript.ScriptTarget.ES2020,
+      allowNonTsExtensions: true,
+    });
+  };
+
+  const handleEditorChange = (newValue: string | undefined) => {
+    if (newValue !== undefined) {
+      onChange(newValue);
     }
-  }, [language]);
+  };
 
-  // For now, return a styled textarea as placeholder
+  // Map language names to Monaco Editor language identifiers
+  const getMonacoLanguage = (lang: string) => {
+    switch (lang.toLowerCase()) {
+      case "javascript":
+        return "javascript";
+      case "python":
+        return "python";
+      case "java":
+        return "java";
+      case "cpp":
+      case "c++":
+        return "cpp";
+      case "typescript":
+        return "typescript";
+      case "html":
+        return "html";
+      case "css":
+        return "css";
+      case "json":
+        return "json";
+      case "sql":
+        return "sql";
+      default:
+        return "plaintext";
+    }
+  };
+
   return (
-    <div className="h-full bg-gray-900 text-gray-300 font-mono" style={{ height }}>
-      <div className="h-full p-4">
-        <div className="text-green-400 text-sm mb-2">
-          # {language.charAt(0).toUpperCase() + language.slice(1)}
-        </div>
-        <textarea
-          ref={editorRef}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full h-5/6 bg-transparent border-none outline-none resize-none text-sm leading-6"
-          placeholder={`Write your ${language} solution here...`}
-          data-testid="code-editor"
-        />
-        <div className="text-xs text-gray-500 mt-2">
-          Monaco Editor will be integrated here for VS Code-like experience
-        </div>
-      </div>
+    <div className="h-full" style={{ height }}>
+      <Editor
+        height={height}
+        defaultLanguage="python"
+        language={getMonacoLanguage(language)}
+        value={value}
+        onChange={handleEditorChange}
+        onMount={handleEditorDidMount}
+        theme="vs-dark"
+        options={{
+          fontSize: 14,
+          fontFamily: "'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace",
+          fontLigatures: true,
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          automaticLayout: true,
+          tabSize: 2,
+          insertSpaces: true,
+          wordWrap: "on",
+          lineNumbers: "on",
+          renderLineHighlight: "line",
+          selectOnLineNumbers: true,
+          matchBrackets: "always",
+          bracketPairColorization: { enabled: true },
+          autoIndent: "full",
+          formatOnPaste: true,
+          formatOnType: true,
+          suggest: {
+            showKeywords: true,
+            showSnippets: true,
+          },
+          quickSuggestions: {
+            other: true,
+            comments: true,
+            strings: true,
+          },
+          parameterHints: {
+            enabled: true,
+          },
+          hover: {
+            enabled: true,
+          },
+        }}
+        loading={
+          <div className="flex items-center justify-center h-full bg-gray-900 text-gray-300">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto"></div>
+              <p className="mt-2 text-sm">Loading editor...</p>
+            </div>
+          </div>
+        }
+      />
     </div>
   );
 }
