@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { promisify } from 'util';
 
 export interface ExecutionResult {
   stdout: string;
@@ -74,12 +75,13 @@ export class CodeExecutor {
     // Write code to file
     await fs.writeFile(filePath, request.code);
 
-    // Execute directly without Docker
-    return await this.runCommand(
-      'python3',
-      [filePath],
+    // Execute with Docker for security
+    return await this.runInDocker(
+      'python:3.11-alpine',
+      ['python', `/code/${fileName}`],
       workDir,
-      request.timeLimit || 5000
+      request.timeLimit || 5000,
+      request.memoryLimit || 128
     );
   }
 
@@ -89,11 +91,12 @@ export class CodeExecutor {
 
     await fs.writeFile(filePath, request.code);
 
-    return await this.runCommand(
-      'node',
-      [filePath],
+    return await this.runInDocker(
+      'node:18-alpine',
+      ['node', `/code/${fileName}`],
       workDir,
-      request.timeLimit || 5000
+      request.timeLimit || 5000,
+      request.memoryLimit || 128
     );
   }
 
@@ -109,12 +112,13 @@ export class CodeExecutor {
 
     await fs.writeFile(filePath, javaCode);
 
-    // Compile first
-    const compileResult = await this.runCommand(
-      'javac',
-      [filePath],
+    // Compile first, then run
+    const compileResult = await this.runInDocker(
+      'openjdk:17-alpine',
+      ['javac', `/code/${fileName}`],
       workDir,
-      10000
+      10000,
+      256
     );
 
     if (compileResult.exitCode !== 0) {
@@ -123,17 +127,18 @@ export class CodeExecutor {
         stderr: compileResult.stderr || 'Compilation failed',
         exitCode: 1,
         runtime: compileResult.runtime,
-        memory: 0,
+        memory: compileResult.memory,
         error: 'Compilation error'
       };
     }
 
     // Run the compiled class
-    return await this.runCommand(
-      'java',
-      ['-cp', workDir, 'Solution'],
+    return await this.runInDocker(
+      'openjdk:17-alpine',
+      ['java', '-cp', '/code', 'Solution'],
       workDir,
-      request.timeLimit || 5000
+      request.timeLimit || 5000,
+      request.memoryLimit || 256
     );
   }
 
@@ -145,11 +150,12 @@ export class CodeExecutor {
     await fs.writeFile(filePath, request.code);
 
     // Compile first
-    const compileResult = await this.runCommand(
-      'g++',
-      ['-o', executablePath, filePath, '-std=c++17'],
+    const compileResult = await this.runInDocker(
+      'gcc:alpine',
+      ['g++', '-o', '/code/solution', `/code/${fileName}`, '-std=c++17'],
       workDir,
-      10000
+      10000,
+      256
     );
 
     if (compileResult.exitCode !== 0) {
@@ -158,35 +164,48 @@ export class CodeExecutor {
         stderr: compileResult.stderr || 'Compilation failed',
         exitCode: 1,
         runtime: compileResult.runtime,
-        memory: 0,
+        memory: compileResult.memory,
         error: 'Compilation error'
       };
     }
 
     // Run the compiled executable
-    return await this.runCommand(
-      executablePath,
-      [],
+    return await this.runInDocker(
+      'gcc:alpine',
+      ['/code/solution'],
       workDir,
-      request.timeLimit || 5000
+      request.timeLimit || 5000,
+      request.memoryLimit || 128
     );
   }
 
-  private async runCommand(
-    command: string,
-    args: string[],
-    cwd: string,
-    timeLimit: number
+  private async runInDocker(
+    image: string,
+    command: string[],
+    workDir: string,
+    timeLimit: number,
+    memoryLimit: number
   ): Promise<ExecutionResult> {
     const startTime = Date.now();
 
     return new Promise((resolve) => {
-      const process = spawn(command, args, {
-        cwd,
-        env: {
-          ...process.env,
-          PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin'
-        }
+      const dockerArgs = [
+        'run',
+        '--rm',
+        '--network', 'none', // No network access
+        '--memory', `${memoryLimit}m`,
+        '--cpus', '0.5',
+        '--user', '65534:65534', // nobody user
+        '--read-only',
+        '--tmpfs', '/tmp:rw,size=10m',
+        '-v', `${workDir}:/code:ro`,
+        '--workdir', '/code',
+        image,
+        ...command
+      ];
+
+      const dockerProcess = spawn('docker', dockerArgs, {
+        stdio: ['pipe', 'pipe', 'pipe']
       });
 
       let stdout = '';
@@ -196,36 +215,25 @@ export class CodeExecutor {
       // Set timeout
       const timeout = setTimeout(() => {
         killed = true;
-        process.kill('SIGTERM');
-        setTimeout(() => {
-          process.kill('SIGKILL');
-        }, 1000);
+        dockerProcess.kill('SIGKILL');
       }, timeLimit);
 
-      process.stdout?.on('data', (data) => {
+      dockerProcess.stdout?.on('data', (data) => {
         stdout += data.toString();
-        // Limit output size to prevent memory issues
-        if (stdout.length > 100000) {
-          stdout = stdout.substring(0, 100000) + '\n... Output truncated ...';
-        }
       });
 
-      process.stderr?.on('data', (data) => {
+      dockerProcess.stderr?.on('data', (data) => {
         stderr += data.toString();
-        // Limit error output size
-        if (stderr.length > 100000) {
-          stderr = stderr.substring(0, 100000) + '\n... Error output truncated ...';
-        }
       });
 
-      process.on('close', (code) => {
+      dockerProcess.on('close', (code) => {
         clearTimeout(timeout);
         const endTime = Date.now();
         const runtime = endTime - startTime;
 
         if (killed) {
           resolve({
-            stdout: stdout.trim(),
+            stdout: '',
             stderr: 'Time limit exceeded',
             exitCode: -1,
             runtime: timeLimit,
@@ -238,40 +246,35 @@ export class CodeExecutor {
             stderr: stderr.trim(),
             exitCode: code || 0,
             runtime,
-            memory: 0
+            memory: 0 // Docker memory usage tracking would need additional setup
           });
         }
       });
 
-      process.on('error', (error) => {
+      dockerProcess.on('error', (error) => {
         clearTimeout(timeout);
-        let errorMessage = error.message;
         
-        // Provide helpful error messages for common issues
-        if (error.message.includes('ENOENT')) {
-          if (command === 'python3') {
-            errorMessage = 'Python is not installed. Please install Python 3 to run Python code.';
-          } else if (command === 'javac' || command === 'java') {
-            errorMessage = 'Java is not installed. Please install Java JDK to run Java code.';
-          } else if (command === 'g++') {
-            errorMessage = 'C++ compiler is not installed. Please install g++ to run C++ code.';
-          } else {
-            errorMessage = `Command '${command}' not found. Please ensure the required runtime is installed.`;
-          }
+        // Check if Docker is not available
+        if (error.message.includes('ENOENT') || error.message.includes('docker')) {
+          resolve({
+            stdout: '',
+            stderr: 'Docker is not available in this environment. For production deployment, ensure Docker is installed and running.',
+            exitCode: -1,
+            runtime: Date.now() - startTime,
+            memory: 0,
+            error: 'Docker not available - This feature requires Docker to be installed and running for secure code execution'
+          });
+        } else {
+          resolve({
+            stdout: '',
+            stderr: error.message,
+            exitCode: -1,
+            runtime: Date.now() - startTime,
+            memory: 0,
+            error: `Execution error: ${error.message}`
+          });
         }
-
-        resolve({
-          stdout: '',
-          stderr: errorMessage,
-          exitCode: -1,
-          runtime: Date.now() - startTime,
-          memory: 0,
-          error: errorMessage
-        });
       });
-
-      // Handle stdin if needed (for future interactive programs)
-      process.stdin?.end();
     });
   }
 
@@ -328,34 +331,14 @@ export class CodeExecutor {
   private injectTestInput(code: string, language: string, input: string): string {
     switch (language.toLowerCase()) {
       case 'python':
-        // For Python, we'll create a test harness
-        return `${code}\n\n# Test execution\nif __name__ == "__main__":\n    try:\n        result = solution(${input})\n        print(result)\n    except Exception as e:\n        print(f"Error: {e}")`;
-      
+        return `${code}\n\n# Test input\nif __name__ == "__main__":\n    result = solution(${input})\n    print(result)`;
       case 'javascript':
-        // For JavaScript, call the function with test input
-        return `${code}\n\n// Test execution\ntry {\n    const result = solution(${input});\n    console.log(result);\n} catch(e) {\n    console.error("Error:", e.message);\n}`;
-      
+        return `${code}\n\n// Test input\nconsole.log(solution(${input}));`;
       case 'java':
-        // For Java, we need to be more careful with the class structure
-        if (code.includes('class Solution')) {
-          // Insert test call in main method
-          return code.replace(
-            'public static void main(String[] args) {',
-            `public static void main(String[] args) {\n        try {\n            Object result = solution(${input});\n            System.out.println(result);\n        } catch(Exception e) {\n            System.err.println("Error: " + e.getMessage());\n        }\n    }\n\n    public static Object solution`
-          );
-        } else {
-          // Wrap in a complete class
-          return `public class Solution {\n    public static void main(String[] args) {\n        try {\n            ${code}\n            // Test with input: ${input}\n        } catch(Exception e) {\n            System.err.println("Error: " + e.getMessage());\n        }\n    }\n}`;
-        }
-      
-      case 'cpp':
-      case 'c++':
-        // For C++, add a main function if it doesn't exist
-        if (!code.includes('int main')) {
-          return `#include <iostream>\n${code}\n\nint main() {\n    try {\n        auto result = solution(${input});\n        std::cout << result << std::endl;\n    } catch(...) {\n        std::cerr << "Error occurred" << std::endl;\n    }\n    return 0;\n}`;
-        }
-        return code;
-      
+        return code.replace(
+          'public static void main(String[] args)',
+          `public static void main(String[] args) {\n        System.out.println(solution(${input}));\n    }\n    public static Object solution`
+        );
       default:
         return code;
     }
