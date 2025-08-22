@@ -33,7 +33,7 @@ export function CodeEditor({ value, onChange, language, height = "100%" }: CodeE
     editorRef.current = editor;
     setIsEditorReady(true);
 
-    // Configure editor settings
+    // Configure editor settings - simplified to avoid conflicts
     editor.updateOptions({
       fontSize: 14,
       fontFamily: "'Fira Code', 'JetBrains Mono', Consolas, 'Courier New', monospace",
@@ -46,40 +46,7 @@ export function CodeEditor({ value, onChange, language, height = "100%" }: CodeE
       insertSpaces: true,
       detectIndentation: false,
       renderLineHighlight: 'line',
-      renderWhitespace: 'boundary',
-      bracketPairColorization: { enabled: true },
-      guides: {
-        indentation: true,
-        bracketPairs: true
-      },
-      suggest: {
-        showKeywords: true,
-        showSnippets: true,
-        showFunctions: true,
-        showConstructors: true,
-        showFields: true,
-        showVariables: true,
-        showClasses: true,
-        showStructs: true,
-        showInterfaces: true,
-        showModules: true,
-        showProperties: true,
-        showEvents: true,
-        showOperators: true,
-        showUnits: true,
-        showValues: true,
-        showConstants: true,
-        showEnums: true,
-        showEnumMembers: true,
-        showColors: true,
-        showFiles: true,
-        showReferences: true,
-        showFolders: true,
-        showTypeParameters: true,
-        showIssues: true,
-        showUsers: true,
-        showWords: true
-      }
+      bracketPairColorization: { enabled: true }
     });
 
     // Configure theme
@@ -167,49 +134,22 @@ export function CodeEditor({ value, onChange, language, height = "100%" }: CodeE
           theme="vscode-dark-custom"
           options={{
             selectOnLineNumbers: true,
-            roundedSelection: false,
             readOnly: false,
             cursorStyle: 'line',
             automaticLayout: true,
-            glyphMargin: false,
-            folding: true,
             lineNumbers: 'on',
-            lineDecorationsWidth: 0,
-            lineNumbersMinChars: 3,
-            scrollbar: {
-              vertical: 'visible',
-              horizontal: 'visible',
-              arrowSize: 30,
-              useShadows: false,
-              verticalHasArrows: false,
-              horizontalHasArrows: false,
-              verticalScrollbarSize: 14,
-              horizontalScrollbarSize: 14
-            },
-            overviewRulerBorder: false,
-            overviewRulerLanes: 0,
-            hideCursorInOverviewRuler: true,
-            contextmenu: true,
-            mouseWheelZoom: true,
-            multiCursorMergeOverlapping: true,
-            wordBasedSuggestions: true,
-            wordBasedSuggestionsOnlySameLanguage: false,
-            acceptSuggestionOnEnter: 'on',
-            acceptSuggestionOnCommitCharacter: true,
-            quickSuggestions: {
-              other: true,
-              comments: false,
-              strings: false
-            },
-            quickSuggestionsDelay: 100,
-            parameterHints: {
-              enabled: true
-            },
+            folding: true,
+            minimap: { enabled: false },
+            wordWrap: 'on',
+            tabSize: 2,
+            insertSpaces: true,
             autoClosingBrackets: 'always',
             autoClosingQuotes: 'always',
             autoIndent: 'advanced',
             formatOnPaste: true,
-            formatOnType: true
+            formatOnType: true,
+            contextmenu: true,
+            mouseWheelZoom: true
           }}
         />
       </div>

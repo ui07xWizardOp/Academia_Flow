@@ -404,10 +404,12 @@ Question Context:
 - Difficulty Level: ${questionIndex < 2 ? 'easy' : questionIndex < 4 ? 'medium' : 'hard'}
 
 Previous questions and responses context:
-${feedback.questions ? feedback.questions.map((q: any, i: number) => `
-Q${i + 1}: ${this.questionBank.find(qb => qb.id === q.questionId)?.question || 'Previous question'}
-Response Quality: ${q.scores ? Object.values(q.scores as any).reduce((a: any, b: any) => a + b, 0) / 4 : 'N/A'}/100
-`).join('') : 'No previous questions'}
+${feedback.questions ? feedback.questions.map((q: any, i: number) => {
+  const foundQuestion = this.questionBank.find(qb => qb.id === q.questionId);
+  const avgScore = q.scores ? Object.values(q.scores as any).reduce((a: any, b: any) => a + b, 0) / 4 : 'N/A';
+  return `Q${i + 1}: ${foundQuestion?.question || 'Previous question'}
+Response Quality: ${avgScore}/100`;
+}).join('\n') : 'No previous questions'}
 
 Generate a unique, relevant question that builds upon the conversation. Include follow-up questions and evaluation criteria.
 
