@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
-import { SimpleCodeEditor } from "@/components/code/simple-code-editor";
+import { CodeEditor } from "@/components/code/code-editor";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,7 +39,7 @@ public:
 };`,
 };
 
-export default function CodeEditor() {
+export default function CodeEditorPage() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -303,7 +303,7 @@ export default function CodeEditor() {
           <div className="w-1/2 flex flex-col">
             {/* Code Editor */}
             <div className="flex-1">
-              <SimpleCodeEditor
+              <CodeEditor
                 value={code}
                 onChange={setCode}
                 language={language}

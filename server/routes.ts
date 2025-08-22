@@ -145,10 +145,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Submissions routes
   app.post("/api/submissions", authenticateToken, async (req: any, res) => {
     try {
-      const submissionData = insertSubmissionSchema.parse({
-        ...req.body,
+      // Log for debugging
+      console.log('Submission request body:', req.body);
+      console.log('User ID:', req.user.id);
+      
+      const submissionData = {
         userId: req.user.id,
-      });
+        problemId: req.body.problemId,
+        code: req.body.code,
+        language: req.body.language,
+        status: "pending", // Will be updated after execution
+        runtime: null,
+        memory: null,
+        testsPassed: 0,
+        totalTests: 0,
+      };
 
       // Execute code with all test cases for submission
       let executionResult: {
@@ -235,7 +246,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(submission);
     } catch (error) {
-      res.status(400).json({ message: "Invalid submission data" });
+      console.error('Submission error:', error);
+      res.status(400).json({ message: "Invalid submission data", error: (error as any).message });
     }
   });
 
