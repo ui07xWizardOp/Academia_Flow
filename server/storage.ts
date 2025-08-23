@@ -89,23 +89,29 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
   
   // Problem methods
   getAllProblems(): Promise<Problem[]>;
   getProblem(id: number): Promise<Problem | undefined>;
   getProblemsByDifficulty(difficulty: string): Promise<Problem[]>;
   createProblem(problem: InsertProblem): Promise<Problem>;
+  updateProblem(id: number, updates: Partial<Problem>): Promise<Problem>;
+  updateProblemTestCases(id: number, testCases: any): Promise<void>;
+  softDeleteProblem(id: number): Promise<void>;
   
   // Submission methods
   createSubmission(submission: InsertSubmission): Promise<Submission>;
   getSubmission(id: number): Promise<Submission | undefined>;
   getUserSubmissions(userId: number): Promise<Submission[]>;
   getProblemSubmissions(problemId: number, userId: number): Promise<Submission[]>;
+  getSubmissionsByProblem(problemId: number): Promise<Submission[]>;
   
   // Progress methods
   getUserProgress(userId: number): Promise<UserProgress[]>;
   getUserProgressForProblem(userId: number, problemId: number): Promise<UserProgress | undefined>;
   updateUserProgress(userId: number, problemId: number, progress: Partial<InsertUserProgress>): Promise<UserProgress>;
+  getProgressByProblem(problemId: number): Promise<UserProgress[]>;
   
   // Interview methods
   createInterviewSession(session: InsertInterviewSession): Promise<InterviewSession>;
@@ -268,6 +274,10 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(users.id);
+  }
+
   async getAllProblems(): Promise<Problem[]> {
     return await db.select().from(problems).orderBy(problems.id);
   }
@@ -287,6 +297,28 @@ export class DatabaseStorage implements IStorage {
       .values(problem)
       .returning();
     return newProblem;
+  }
+
+  async updateProblem(id: number, updates: Partial<Problem>): Promise<Problem> {
+    const [updated] = await db
+      .update(problems)
+      .set(updates)
+      .where(eq(problems.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateProblemTestCases(id: number, testCases: any): Promise<void> {
+    await db
+      .update(problems)
+      .set({ testCases })
+      .where(eq(problems.id, id));
+  }
+
+  async softDeleteProblem(id: number): Promise<void> {
+    // For now, actually delete the problem
+    // In production, add a deleted_at column
+    await db.delete(problems).where(eq(problems.id, id));
   }
 
   async createSubmission(submission: InsertSubmission): Promise<Submission> {
@@ -315,6 +347,14 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(submissions)
       .where(and(eq(submissions.problemId, problemId), eq(submissions.userId, userId)))
+      .orderBy(desc(submissions.submittedAt));
+  }
+
+  async getSubmissionsByProblem(problemId: number): Promise<Submission[]> {
+    return await db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.problemId, problemId))
       .orderBy(desc(submissions.submittedAt));
   }
 
@@ -350,6 +390,13 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return created;
     }
+  }
+
+  async getProgressByProblem(problemId: number): Promise<UserProgress[]> {
+    return await db
+      .select()
+      .from(userProgress)
+      .where(eq(userProgress.problemId, problemId));
   }
 
   async createInterviewSession(session: InsertInterviewSession): Promise<InterviewSession> {

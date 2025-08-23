@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { initializeCollaboration } from "./real-time-collaboration";
 import { storage } from "./storage";
-import { codeExecutor } from "./code-executor";
+import { secureCodeExecutor } from "./code-executor-secure";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { insertUserSchema, insertSubmissionSchema, insertInterviewSessionSchema } from "@shared/schema";
@@ -193,7 +193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (testCases.length === 0) {
           // If no test cases, just execute the code
-          const result = await codeExecutor.executeCode({
+          const result = await secureCodeExecutor.executeCode({
             code: submissionData.code,
             language: submissionData.language,
             timeLimit: 10000, // 10 seconds for submission
@@ -209,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
         } else {
           // Execute with all test cases
-          const result = await codeExecutor.executeWithTestCases({
+          const result = await secureCodeExecutor.executeWithTestCases({
             code: submissionData.code,
             language: submissionData.language,
             testCases,
@@ -220,11 +220,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           executionResult = {
             status: result.allPassed ? "accepted" : 
                    result.results.some(r => r.error?.includes("Time limit")) ? "time_limit_exceeded" :
-                   result.results.some(r => r.exitCode !== 0) ? "runtime_error" : 
+                   result.results.some(r => !r.passed && r.error) ? "runtime_error" : 
                    "wrong_answer",
-            runtime: Math.max(...result.results.map(r => r.runtime)),
-            memory: Math.max(...result.results.map(r => r.memory)),
-            testsPassed: result.results.filter(r => r.exitCode === 0 && !r.error).length,
+            runtime: result.runtime,
+            memory: result.memory,
+            testsPassed: result.results.filter(r => r.passed).length,
             totalTests: result.results.length,
           };
         }
@@ -477,8 +477,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Execute code with Docker
-      const result = await codeExecutor.executeCode({
+      // Execute code with secure executor
+      const result = await secureCodeExecutor.executeCode({
         code,
         language,
         testCases: testCases?.slice(0, 3), // Limit to first 3 test cases for "Run Code"
