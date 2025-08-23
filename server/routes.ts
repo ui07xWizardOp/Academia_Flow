@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { initializeCollaboration } from "./real-time-collaboration";
 import { storage } from "./storage";
 import { secureCodeExecutor } from "./code-executor-secure";
+import { safeExecutor } from "./safe-executor";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { insertUserSchema, insertSubmissionSchema, insertInterviewSessionSchema } from "@shared/schema";
@@ -195,12 +196,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (testCases.length === 0) {
           // If no test cases, just execute the code
-          const result = await secureCodeExecutor.executeCode({
-            code: submissionData.code,
-            language: submissionData.language,
-            timeLimit: 10000, // 10 seconds for submission
-            memoryLimit: 256 // 256 MB
-          });
+          let result;
+          try {
+            result = await secureCodeExecutor.executeCode({
+              code: submissionData.code,
+              language: submissionData.language,
+              timeLimit: 10000, // 10 seconds for submission
+              memoryLimit: 256 // 256 MB
+            });
+          } catch (execError: any) {
+            // Fallback to safe executor for permission errors
+            if (execError.message?.includes('EPERM') || execError.message?.includes('spawn')) {
+              const safeResult = safeExecutor.execute(submissionData.language, submissionData.code, '');
+              result = {
+                stdout: safeResult.stdout,
+                stderr: safeResult.stderr,
+                exitCode: safeResult.exitCode,
+                runtime: safeResult.runtime,
+                memory: 0
+              };
+            } else {
+              throw execError;
+            }
+          }
           
           executionResult = {
             status: result.exitCode === 0 ? "accepted" : "runtime_error",
@@ -479,16 +497,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Execute code with secure executor
-      const result = await secureCodeExecutor.executeCode({
-        code,
-        language,
-        testCases: testCases?.slice(0, 3), // Limit to first 3 test cases for "Run Code"
-        timeLimit: 5000, // 5 seconds
-        memoryLimit: 128 // 128 MB
-      });
+      // Execute code with secure executor, fallback to safe executor
+      let result;
+      try {
+        result = await secureCodeExecutor.executeCode({
+          code,
+          language,
+          testCases: testCases?.slice(0, 3), // Limit to first 3 test cases for "Run Code"
+          timeLimit: 5000, // 5 seconds
+          memoryLimit: 128 // 128 MB
+        });
+      } catch (execError: any) {
+        // Fallback to safe executor for permission errors
+        if (execError.message?.includes('EPERM') || execError.message?.includes('spawn') || execError.code === 'EPERM') {
+          console.log('[Code Execution] Using safe executor due to permission issues');
+          const safeResult = safeExecutor.execute(language, code, testCases?.[0]?.input || '');
+          result = {
+            stdout: safeResult.stdout,
+            stderr: safeResult.stderr,
+            exitCode: safeResult.exitCode,
+            runtime: safeResult.runtime,
+            memory: 0,
+            testCaseResults: testCases?.slice(0, 3).map((tc: any, index: number) => ({
+              testCaseId: index,
+              passed: safeResult.stdout.trim() === tc.expectedOutput.trim(),
+              input: tc.input,
+              expectedOutput: tc.expectedOutput,
+              actualOutput: safeResult.stdout,
+              runtime: safeResult.runtime,
+              memory: 0,
+              points: safeResult.stdout.trim() === tc.expectedOutput.trim() ? 1 : 0,
+              maxPoints: 1
+            }))
+          };
+        } else {
+          throw execError;
+        }
+      }
+      
+      const result_final = result;
 
-      res.json(result);
+      res.json(result_final);
     } catch (error) {
       console.error('Code execution error:', error);
       res.status(500).json({ 

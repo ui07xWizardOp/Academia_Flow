@@ -3,7 +3,7 @@ import { db } from "./db";
 import { intelligentTutoringSessions, intelligentTutoringMessages } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 interface TopicBreakdown {
   mainTopic: string;
@@ -76,6 +76,36 @@ export class IntelligentTutor {
   }
 
   private async generateTopicBreakdown(topic: string): Promise<TopicBreakdown> {
+    if (!openai) {
+      // Return a structured fallback breakdown
+      return {
+        mainTopic: topic,
+        overview: `${topic} is a fundamental concept in computer science that requires understanding key principles and practical application.`,
+        subTopics: [
+          {
+            title: "Basic Concepts",
+            description: "Understanding the fundamentals",
+            keyPoints: ["Core principles", "Basic terminology", "Common patterns"],
+            order: 1
+          },
+          {
+            title: "Implementation",
+            description: "Putting concepts into practice",
+            keyPoints: ["Code examples", "Best practices", "Common pitfalls"],
+            order: 2
+          },
+          {
+            title: "Advanced Topics",
+            description: "Deeper understanding and optimization",
+            keyPoints: ["Optimization techniques", "Real-world applications", "Performance considerations"],
+            order: 3
+          }
+        ],
+        suggestedPath: "Start with basics, practice with examples, then explore advanced concepts",
+        estimatedTime: "2-3 hours"
+      };
+    }
+    
     const response = await openai.chat.completions.create({
       model: this.model,
       messages: [

@@ -55,7 +55,7 @@ interface ActionItem {
 }
 
 export class AILearningAssistant {
-  private openai: OpenAI;
+  private openai: OpenAI | null;
   private sessions: Map<string, ChatSession> = new Map();
   private recommendationEngine: AIRecommendationEngine;
   private intelligentTutor: IntelligentTutor;
@@ -63,9 +63,15 @@ export class AILearningAssistant {
   private model = "gpt-4o";
 
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    // Initialize OpenAI only if API key is available
+    if (process.env.OPENAI_API_KEY) {
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+    } else {
+      this.openai = null;
+      console.log('[AILearningAssistant] OpenAI API key not configured, using fallback responses');
+    }
     this.recommendationEngine = new AIRecommendationEngine();
     this.intelligentTutor = new IntelligentTutor();
   }
@@ -202,6 +208,23 @@ export class AILearningAssistant {
     - needsCode: Boolean indicating if user might need code examples`;
 
     try {
+      if (!this.openai) {
+        // Provide fallback intent detection
+        const lowerMessage = message.toLowerCase();
+        return {
+          type: lowerMessage.includes('help') ? 'problem-help' :
+                lowerMessage.includes('explain') ? 'concept-explanation' :
+                lowerMessage.includes('debug') || lowerMessage.includes('error') ? 'debugging' :
+                lowerMessage.includes('career') || lowerMessage.includes('job') ? 'career-advice' :
+                lowerMessage.includes('review') ? 'code-review' :
+                lowerMessage.includes('practice') ? 'practice-request' : 'general-question',
+          topic: 'General Programming',
+          confidence: 0.7,
+          keywords: message.split(' ').filter(w => w.length > 3),
+          needsCode: lowerMessage.includes('code') || lowerMessage.includes('example')
+        };
+      }
+      
       const response = await this.openai.chat.completions.create({
         model: this.model,
         messages: [
@@ -259,18 +282,30 @@ export class AILearningAssistant {
       content: m.content
     }));
 
-    const response = await this.openai.chat.completions.create({
-      model: this.model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...conversationHistory,
-        { role: "user", content: message }
-      ],
-      temperature: 0.7,
-      max_tokens: 800
-    });
+    let assistantMessage: string;
+    
+    if (!this.openai) {
+      // Provide helpful fallback response
+      assistantMessage = "I can help you with this problem! Let's break it down:\n\n" +
+        "1. First, understand what the problem is asking\n" +
+        "2. Identify the input and expected output\n" +
+        "3. Think about which algorithm or data structure might help\n" +
+        "4. Start with a simple approach, then optimize\n\n" +
+        "What specific part are you struggling with?";
+    } else {
+      const response = await this.openai.chat.completions.create({
+        model: this.model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...conversationHistory,
+          { role: "user", content: message }
+        ],
+        temperature: 0.7,
+        max_tokens: 800
+      });
 
-    const assistantMessage = response.choices[0].message.content || "";
+      assistantMessage = response.choices[0].message.content || "";  
+    }
 
     // Get related problems for practice
     const problems = await storage.getAllProblems();
@@ -363,18 +398,30 @@ export class AILearningAssistant {
     Guide them through systematic debugging without fixing the code for them.
     Teach debugging strategies and help them understand the root cause.`;
 
-    const response = await this.openai.chat.completions.create({
-      model: this.model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Help debug: ${message}` }
-      ],
-      temperature: 0.5,
-      max_tokens: 800
-    });
+    let debugMessage: string;
+    
+    if (!this.openai) {
+      debugMessage = "Let's debug this step by step:\n\n" +
+        "1. Check the exact error message - what line is it pointing to?\n" +
+        "2. Verify your variable values before the error\n" +
+        "3. Test with simpler input to isolate the issue\n" +
+        "4. Add console.log statements to trace execution\n\n" +
+        "What specific error are you encountering?";
+    } else {
+      const response = await this.openai.chat.completions.create({
+        model: this.model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Help debug: ${message}` }
+        ],
+        temperature: 0.5,
+        max_tokens: 800
+      });
+      debugMessage = response.choices[0].message.content || "";
+    }
 
     return {
-      message: response.choices[0].message.content || "",
+      message: debugMessage,
       suggestions: [
         "Add print statements to track variable values",
         "Check edge cases and boundary conditions",

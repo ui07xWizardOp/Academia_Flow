@@ -56,13 +56,18 @@ interface UserProfile {
 }
 
 export class AIInterviewSimulator {
-  private openai: OpenAI;
+  private openai: OpenAI | null;
   private conversationMemory: Map<number, any[]> = new Map();
 
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    if (process.env.OPENAI_API_KEY) {
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+    } else {
+      this.openai = null;
+      console.log('[AIInterviewSimulator] OpenAI API key not configured, using fallback mode');
+    }
   }
   private questionBank: Question[] = [
     {
@@ -365,6 +370,10 @@ Provide a detailed analysis with specific strengths, weaknesses, and actionable 
   "recommendations": ["actionable recommendation 1", "actionable recommendation 2", "actionable recommendation 3"]
 }`;
 
+      if (!this.openai) {
+        return this.getDefaultAnalysis();
+      }
+      
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
@@ -467,6 +476,10 @@ Respond in JSON format:
   }
 }`;
 
+      if (!this.openai) {
+        return this.provideFallbackFollowup(sessionId, userAnswer);
+      }
+      
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
@@ -671,6 +684,15 @@ Generate a natural, welcoming greeting that:
 
 Keep it conversational and friendly, like a real human interviewer. Don't mention their specific stats yet.`;
 
+      if (!this.openai) {
+        return {
+          sessionId: sessionId.toString(),
+          message: "Welcome to your interview! I'm excited to learn about your background and experience. Let's start with a simple introduction - can you tell me about yourself and what brings you to this interview today?",
+          messageType: 'greeting' as const,
+          nextAction: 'continue' as const
+        };
+      }
+      
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -724,6 +746,15 @@ Generate a natural response that:
 
 Be conversational and show genuine interest in their journey.`;
 
+      if (!this.openai) {
+        return {
+          sessionId: sessionId.toString(),
+          message: "That's a great answer! Can you elaborate on how you approached this problem and what alternatives you considered?",
+          messageType: 'followup' as const,
+          nextAction: 'continue' as const
+        };
+      }
+      
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -795,6 +826,17 @@ For behavioral questions, relate to their coding journey.
 
 Format as a natural conversation, not a formal question.`;
 
+      if (!this.openai) {
+        const nextQuestion = this.getNextQuestion(session?.feedback as any);
+        return {
+          sessionId: sessionId.toString(),
+          message: `Great! Let's move on to the next question: ${nextQuestion.question}`,
+          messageType: 'question' as const,
+          nextAction: 'continue' as const,
+          metadata: { questionData: nextQuestion }
+        };
+      }
+      
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -851,6 +893,15 @@ Create a warm closing that:
 
 Be genuine and supportive.`;
 
+      if (!this.openai) {
+        return {
+          sessionId: sessionId.toString(),
+          message: "Thank you for participating in this interview! You demonstrated good problem-solving skills and clear communication. We'll provide detailed feedback shortly.",
+          messageType: 'closing' as const,
+          nextAction: 'complete' as const
+        };
+      }
+      
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
