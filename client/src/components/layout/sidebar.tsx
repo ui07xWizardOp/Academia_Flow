@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import logoImage from "@assets/image_1755930165009.png";
 import {
   Home,
   List,
@@ -84,8 +85,12 @@ export function Sidebar() {
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <Code className="text-white text-lg" />
+          <div className="w-10 h-10 rounded-lg overflow-hidden">
+            <img 
+              src={logoImage} 
+              alt="CodeLearn Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-gray-900">CodeLearn</h1>
