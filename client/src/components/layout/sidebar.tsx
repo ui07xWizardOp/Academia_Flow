@@ -24,7 +24,13 @@ import {
   Brain,
   Zap,
   Target,
-  User
+  User,
+  Briefcase,
+  FileText,
+  Calendar,
+  GraduationCap,
+  Building2,
+  Network
 } from "lucide-react";
 
 // Student navigation
@@ -39,6 +45,14 @@ const studentNavigation = [
   { name: "AI Tutor", href: "/intelligent-tutoring", icon: Brain },
   { name: "Collaboration", href: "/collaboration", icon: UserCheck },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  // Career Services
+  { name: "Job Board", href: "/career/jobs", icon: Briefcase },
+  { name: "Resume Builder", href: "/career/resume", icon: FileText },
+  { name: "Career Counseling", href: "/career/counseling", icon: Calendar },
+  { name: "Career Events", href: "/career/events", icon: Calendar },
+  { name: "Alumni Network", href: "/career/alumni", icon: Network },
+  { name: "Internships", href: "/career/internships", icon: Building2 },
+  { name: "Skills Assessment", href: "/career/skills", icon: Brain },
 ];
 
 // Professor navigation

@@ -189,6 +189,196 @@ export const discussions = pgTable("discussions", {
   createdAt: timestamp("created_at").default(sql`now()`).notNull(),
 });
 
+// Career Services Tables
+export const jobListings = pgTable("job_listings", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  company: text("company").notNull(),
+  location: text("location").notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // full-time, part-time, internship, contract
+  description: text("description").notNull(),
+  requirements: text("requirements").array(),
+  salary: jsonb("salary"), // {min: number, max: number, currency: string}
+  benefits: text("benefits").array(),
+  applicationDeadline: timestamp("application_deadline"),
+  postedDate: timestamp("posted_date").default(sql`now()`).notNull(),
+  status: varchar("status", { length: 20 }).default("active"), // active, closed, filled
+  companyLogo: text("company_logo"),
+  applicationUrl: text("application_url"),
+  contactEmail: text("contact_email"),
+  tags: text("tags").array(),
+  experienceLevel: varchar("experience_level", { length: 50 }), // entry, mid, senior, executive
+  createdBy: integer("created_by").references(() => users.id),
+});
+
+export const jobApplications = pgTable("job_applications", {
+  id: serial("id").primaryKey(),
+  jobId: integer("job_id").references(() => jobListings.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  resumeId: integer("resume_id").references(() => resumes.id),
+  coverLetter: text("cover_letter"),
+  status: varchar("status", { length: 50 }).default("submitted"), // submitted, reviewing, interviewed, offered, rejected, accepted
+  appliedAt: timestamp("applied_at").default(sql`now()`).notNull(),
+  notes: text("notes"),
+  followUpDate: timestamp("follow_up_date"),
+});
+
+export const resumes = pgTable("resumes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  template: varchar("template", { length: 50 }).default("professional"), // professional, modern, creative, minimal
+  content: jsonb("content").notNull(), // Structured resume data
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`now()`).notNull(),
+});
+
+export const careerCounseling = pgTable("career_counseling", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").references(() => users.id).notNull(),
+  counselorId: integer("counselor_id").references(() => users.id).notNull(),
+  scheduledDate: timestamp("scheduled_date").notNull(),
+  duration: integer("duration").default(60), // minutes
+  type: varchar("type", { length: 50 }).notNull(), // career-planning, resume-review, mock-interview, general
+  status: varchar("status", { length: 20 }).default("scheduled"), // scheduled, completed, cancelled, no-show
+  notes: text("notes"),
+  meetingUrl: text("meeting_url"),
+  feedback: text("feedback"),
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+});
+
+export const companies = pgTable("companies", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  industry: text("industry").notNull(),
+  size: varchar("size", { length: 50 }), // startup, small, medium, large, enterprise
+  location: text("location"),
+  website: text("website"),
+  logo: text("logo"),
+  description: text("description"),
+  partnershipStatus: varchar("partnership_status", { length: 50 }).default("active"), // active, pending, inactive
+  contactPerson: text("contact_person"),
+  contactEmail: text("contact_email"),
+  hiringActive: boolean("hiring_active").default(true),
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+});
+
+export const careerEvents = pgTable("career_events", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // workshop, career-fair, info-session, networking
+  description: text("description").notNull(),
+  date: timestamp("date").notNull(),
+  duration: integer("duration"), // minutes
+  location: text("location"),
+  isVirtual: boolean("is_virtual").default(false),
+  meetingUrl: text("meeting_url"),
+  maxAttendees: integer("max_attendees"),
+  registrationDeadline: timestamp("registration_deadline"),
+  presenter: text("presenter"),
+  companyId: integer("company_id").references(() => companies.id),
+  tags: text("tags").array(),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+});
+
+export const eventRegistrations = pgTable("event_registrations", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id").references(() => careerEvents.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  registeredAt: timestamp("registered_at").default(sql`now()`).notNull(),
+  attended: boolean("attended").default(false),
+  feedback: text("feedback"),
+  rating: integer("rating"), // 1-5
+});
+
+export const alumniProfiles = pgTable("alumni_profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  graduationYear: integer("graduation_year").notNull(),
+  degree: text("degree").notNull(),
+  major: text("major").notNull(),
+  currentCompany: text("current_company"),
+  currentPosition: text("current_position"),
+  industry: text("industry"),
+  location: text("location"),
+  bio: text("bio"),
+  linkedinUrl: text("linkedin_url"),
+  willingToMentor: boolean("willing_to_mentor").default(false),
+  areasOfExpertise: text("areas_of_expertise").array(),
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+});
+
+export const mentorshipRequests = pgTable("mentorship_requests", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").references(() => users.id).notNull(),
+  mentorId: integer("mentor_id").references(() => users.id).notNull(),
+  message: text("message").notNull(),
+  status: varchar("status", { length: 20 }).default("pending"), // pending, accepted, declined
+  requestedAt: timestamp("requested_at").default(sql`now()`).notNull(),
+  respondedAt: timestamp("responded_at"),
+  responseMessage: text("response_message"),
+});
+
+export const internships = pgTable("internships", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  description: text("description").notNull(),
+  requirements: text("requirements").array(),
+  duration: text("duration"), // e.g., "3 months", "Summer 2024"
+  isPaid: boolean("is_paid").default(true),
+  stipend: text("stipend"),
+  location: text("location"),
+  isRemote: boolean("is_remote").default(false),
+  applicationDeadline: timestamp("application_deadline"),
+  startDate: timestamp("start_date"),
+  departments: text("departments").array(),
+  status: varchar("status", { length: 20 }).default("open"), // open, closed, filled
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+});
+
+export const skillsAssessments = pgTable("skills_assessments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  assessmentType: varchar("assessment_type", { length: 50 }).notNull(), // technical, soft-skills, personality
+  results: jsonb("results").notNull(), // Detailed assessment results
+  strengths: text("strengths").array(),
+  areasForImprovement: text("areas_for_improvement").array(),
+  recommendations: text("recommendations").array(),
+  completedAt: timestamp("completed_at").default(sql`now()`).notNull(),
+});
+
+export const careerPaths = pgTable("career_paths", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  targetRole: text("target_role").notNull(),
+  currentLevel: varchar("current_level", { length: 50 }), // student, entry, mid, senior
+  targetIndustry: text("target_industry"),
+  timeline: text("timeline"), // e.g., "2 years", "5 years"
+  requiredSkills: text("required_skills").array(),
+  milestones: jsonb("milestones"), // Array of milestone objects
+  progress: integer("progress").default(0), // percentage
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`now()`).notNull(),
+});
+
+export const careerResources = pgTable("career_resources", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // guide, template, video, article, tool
+  category: varchar("category", { length: 50 }).notNull(), // resume, interview, networking, job-search
+  description: text("description"),
+  content: text("content"),
+  fileUrl: text("file_url"),
+  tags: text("tags").array(),
+  views: integer("views").default(0),
+  isPublic: boolean("is_public").default(true),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+});
+
 // AI Interview Tables
 export const aiInterviewSessions = pgTable("ai_interview_sessions", {
   id: serial("id").primaryKey(),
@@ -414,6 +604,74 @@ export const interviewSessionsRelations = relations(interviewSessions, ({ one })
   }),
 }));
 
+// Insert schemas for Career Services
+export const insertJobListingSchema = createInsertSchema(jobListings).omit({
+  id: true,
+  postedDate: true,
+});
+
+export const insertJobApplicationSchema = createInsertSchema(jobApplications).omit({
+  id: true,
+  appliedAt: true,
+});
+
+export const insertResumeSchema = createInsertSchema(resumes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCareerCounselingSchema = createInsertSchema(careerCounseling).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCompanySchema = createInsertSchema(companies).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCareerEventSchema = createInsertSchema(careerEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertEventRegistrationSchema = createInsertSchema(eventRegistrations).omit({
+  id: true,
+  registeredAt: true,
+});
+
+export const insertAlumniProfileSchema = createInsertSchema(alumniProfiles).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMentorshipRequestSchema = createInsertSchema(mentorshipRequests).omit({
+  id: true,
+  requestedAt: true,
+});
+
+export const insertInternshipSchema = createInsertSchema(internships).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSkillsAssessmentSchema = createInsertSchema(skillsAssessments).omit({
+  id: true,
+  completedAt: true,
+});
+
+export const insertCareerPathSchema = createInsertSchema(careerPaths).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCareerResourceSchema = createInsertSchema(careerResources).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -484,6 +742,34 @@ export const insertDiscussionSchema = createInsertSchema(discussions).omit({
   id: true,
   createdAt: true,
 });
+
+// Career Services Types
+export type JobListing = typeof jobListings.$inferSelect;
+export type InsertJobListing = z.infer<typeof insertJobListingSchema>;
+export type JobApplication = typeof jobApplications.$inferSelect;
+export type InsertJobApplication = z.infer<typeof insertJobApplicationSchema>;
+export type Resume = typeof resumes.$inferSelect;
+export type InsertResume = z.infer<typeof insertResumeSchema>;
+export type CareerCounseling = typeof careerCounseling.$inferSelect;
+export type InsertCareerCounseling = z.infer<typeof insertCareerCounselingSchema>;
+export type Company = typeof companies.$inferSelect;
+export type InsertCompany = z.infer<typeof insertCompanySchema>;
+export type CareerEvent = typeof careerEvents.$inferSelect;
+export type InsertCareerEvent = z.infer<typeof insertCareerEventSchema>;
+export type EventRegistration = typeof eventRegistrations.$inferSelect;
+export type InsertEventRegistration = z.infer<typeof insertEventRegistrationSchema>;
+export type AlumniProfile = typeof alumniProfiles.$inferSelect;
+export type InsertAlumniProfile = z.infer<typeof insertAlumniProfileSchema>;
+export type MentorshipRequest = typeof mentorshipRequests.$inferSelect;
+export type InsertMentorshipRequest = z.infer<typeof insertMentorshipRequestSchema>;
+export type Internship = typeof internships.$inferSelect;
+export type InsertInternship = z.infer<typeof insertInternshipSchema>;
+export type SkillsAssessment = typeof skillsAssessments.$inferSelect;
+export type InsertSkillsAssessment = z.infer<typeof insertSkillsAssessmentSchema>;
+export type CareerPath = typeof careerPaths.$inferSelect;
+export type InsertCareerPath = z.infer<typeof insertCareerPathSchema>;
+export type CareerResource = typeof careerResources.$inferSelect;
+export type InsertCareerResource = z.infer<typeof insertCareerResourceSchema>;
 
 // Types
 export type User = typeof users.$inferSelect;

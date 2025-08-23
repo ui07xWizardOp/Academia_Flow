@@ -21,6 +21,15 @@ import { lazy } from "react";
 import StudentProfile from "@/pages/student-profile";
 import Submissions from "@/pages/submissions";
 
+// Career Services components
+import JobBoard from "@/pages/job-board";
+import ResumeBuilder from "@/pages/resume-builder";
+import CareerCounseling from "@/pages/career-counseling";
+import CareerEvents from "@/pages/career-events";
+import AlumniNetwork from "@/pages/alumni-network";
+import Internships from "@/pages/internships";
+import SkillsAssessment from "@/pages/skills-assessment";
+
 // Lazy load Stage 3 enterprise components
 const CourseManagement = lazy(() => import("./pages/course-management"));
 const InstitutionalAnalytics = lazy(() => import("./pages/institutional-analytics"));
@@ -199,6 +208,42 @@ function Router() {
       <Route path="/app/ai-assistant">
         <ProtectedRoute>
           <AIAssistant />
+        </ProtectedRoute>
+      </Route>
+      {/* Career Services Routes */}
+      <Route path="/career/jobs">
+        <ProtectedRoute>
+          <JobBoard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/career/resume">
+        <ProtectedRoute>
+          <ResumeBuilder />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/career/counseling">
+        <ProtectedRoute>
+          <CareerCounseling />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/career/events">
+        <ProtectedRoute>
+          <CareerEvents />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/career/alumni">
+        <ProtectedRoute>
+          <AlumniNetwork />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/career/internships">
+        <ProtectedRoute>
+          <Internships />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/career/skills">
+        <ProtectedRoute>
+          <SkillsAssessment />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />

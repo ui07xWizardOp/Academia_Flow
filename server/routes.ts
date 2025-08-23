@@ -6,6 +6,7 @@ import { codeExecutor } from "./code-executor";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { insertUserSchema, insertSubmissionSchema, insertInterviewSessionSchema } from "@shared/schema";
+import careerRoutes from "./career-routes";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
@@ -814,6 +815,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get active rooms" });
     }
   });
+
+  // Career Services Routes
+  app.use("/api/career", careerRoutes);
 
   const httpServer = createServer(app);
   

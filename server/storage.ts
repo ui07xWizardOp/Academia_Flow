@@ -13,6 +13,19 @@ import {
   grades,
   attendance,
   discussions,
+  jobListings,
+  jobApplications,
+  resumes,
+  careerCounseling,
+  companies,
+  careerEvents,
+  eventRegistrations,
+  alumniProfiles,
+  mentorshipRequests,
+  internships,
+  skillsAssessments,
+  careerPaths,
+  careerResources,
   type User, 
   type InsertUser,
   type Problem,
@@ -40,7 +53,33 @@ import {
   type Attendance,
   type InsertAttendance,
   type Discussion,
-  type InsertDiscussion
+  type InsertDiscussion,
+  type JobListing,
+  type InsertJobListing,
+  type JobApplication,
+  type InsertJobApplication,
+  type Resume,
+  type InsertResume,
+  type CareerCounseling,
+  type InsertCareerCounseling,
+  type Company,
+  type InsertCompany,
+  type CareerEvent,
+  type InsertCareerEvent,
+  type EventRegistration,
+  type InsertEventRegistration,
+  type AlumniProfile,
+  type InsertAlumniProfile,
+  type MentorshipRequest,
+  type InsertMentorshipRequest,
+  type Internship,
+  type InsertInternship,
+  type SkillsAssessment,
+  type InsertSkillsAssessment,
+  type CareerPath,
+  type InsertCareerPath,
+  type CareerResource,
+  type InsertCareerResource
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -131,6 +170,83 @@ export interface IStorage {
   getDiscussionReplies(parentId: number): Promise<Discussion[]>;
   updateDiscussion(id: number, updates: Partial<InsertDiscussion>): Promise<Discussion>;
   deleteDiscussion(id: number): Promise<void>;
+  
+  // Career Services - Job Listings
+  createJobListing(job: InsertJobListing): Promise<JobListing>;
+  getJobListing(id: number): Promise<JobListing | undefined>;
+  getAllJobListings(): Promise<JobListing[]>;
+  getActiveJobListings(): Promise<JobListing[]>;
+  updateJobListing(id: number, updates: Partial<InsertJobListing>): Promise<JobListing>;
+  deleteJobListing(id: number): Promise<void>;
+  
+  // Career Services - Job Applications
+  createJobApplication(application: InsertJobApplication): Promise<JobApplication>;
+  getJobApplication(id: number): Promise<JobApplication | undefined>;
+  getUserJobApplications(userId: number): Promise<JobApplication[]>;
+  getJobApplicationsForListing(jobId: number): Promise<JobApplication[]>;
+  updateJobApplication(id: number, updates: Partial<InsertJobApplication>): Promise<JobApplication>;
+  
+  // Career Services - Resumes
+  createResume(resume: InsertResume): Promise<Resume>;
+  getResume(id: number): Promise<Resume | undefined>;
+  getUserResumes(userId: number): Promise<Resume[]>;
+  updateResume(id: number, updates: Partial<InsertResume>): Promise<Resume>;
+  deleteResume(id: number): Promise<void>;
+  setDefaultResume(userId: number, resumeId: number): Promise<void>;
+  
+  // Career Services - Career Counseling
+  scheduleCareerCounseling(session: InsertCareerCounseling): Promise<CareerCounseling>;
+  getCareerCounselingSession(id: number): Promise<CareerCounseling | undefined>;
+  getUserCounselingSessions(userId: number): Promise<CareerCounseling[]>;
+  getCounselorSessions(counselorId: number): Promise<CareerCounseling[]>;
+  updateCounselingSession(id: number, updates: Partial<InsertCareerCounseling>): Promise<CareerCounseling>;
+  
+  // Career Services - Companies
+  createCompany(company: InsertCompany): Promise<Company>;
+  getCompany(id: number): Promise<Company | undefined>;
+  getAllCompanies(): Promise<Company[]>;
+  getActivePartners(): Promise<Company[]>;
+  updateCompany(id: number, updates: Partial<InsertCompany>): Promise<Company>;
+  
+  // Career Services - Career Events
+  createCareerEvent(event: InsertCareerEvent): Promise<CareerEvent>;
+  getCareerEvent(id: number): Promise<CareerEvent | undefined>;
+  getUpcomingEvents(): Promise<CareerEvent[]>;
+  registerForEvent(registration: InsertEventRegistration): Promise<EventRegistration>;
+  getEventRegistrations(eventId: number): Promise<EventRegistration[]>;
+  getUserEventRegistrations(userId: number): Promise<EventRegistration[]>;
+  
+  // Career Services - Alumni Network
+  createAlumniProfile(profile: InsertAlumniProfile): Promise<AlumniProfile>;
+  getAlumniProfile(id: number): Promise<AlumniProfile | undefined>;
+  getAlumniProfiles(): Promise<AlumniProfile[]>;
+  getMentorProfiles(): Promise<AlumniProfile[]>;
+  requestMentorship(request: InsertMentorshipRequest): Promise<MentorshipRequest>;
+  getMentorshipRequests(mentorId: number): Promise<MentorshipRequest[]>;
+  updateMentorshipRequest(id: number, updates: Partial<InsertMentorshipRequest>): Promise<MentorshipRequest>;
+  
+  // Career Services - Internships
+  createInternship(internship: InsertInternship): Promise<Internship>;
+  getInternship(id: number): Promise<Internship | undefined>;
+  getActiveInternships(): Promise<Internship[]>;
+  getCompanyInternships(companyId: number): Promise<Internship[]>;
+  updateInternship(id: number, updates: Partial<InsertInternship>): Promise<Internship>;
+  
+  // Career Services - Skills Assessment
+  createSkillsAssessment(assessment: InsertSkillsAssessment): Promise<SkillsAssessment>;
+  getUserAssessments(userId: number): Promise<SkillsAssessment[]>;
+  getLatestAssessment(userId: number, type: string): Promise<SkillsAssessment | undefined>;
+  
+  // Career Services - Career Paths
+  createCareerPath(path: InsertCareerPath): Promise<CareerPath>;
+  getUserCareerPaths(userId: number): Promise<CareerPath[]>;
+  updateCareerPath(id: number, updates: Partial<InsertCareerPath>): Promise<CareerPath>;
+  
+  // Career Services - Career Resources
+  createCareerResource(resource: InsertCareerResource): Promise<CareerResource>;
+  getCareerResource(id: number): Promise<CareerResource | undefined>;
+  getCareerResources(category?: string): Promise<CareerResource[]>;
+  incrementResourceViews(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -587,6 +703,428 @@ export class DatabaseStorage implements IStorage {
 
   async deleteDiscussion(id: number): Promise<void> {
     await db.delete(discussions).where(eq(discussions.id, id));
+  }
+
+  // Career Services - Job Listings Implementation
+  async createJobListing(job: InsertJobListing): Promise<JobListing> {
+    const [newJob] = await db
+      .insert(jobListings)
+      .values(job)
+      .returning();
+    return newJob;
+  }
+
+  async getJobListing(id: number): Promise<JobListing | undefined> {
+    const [job] = await db.select().from(jobListings).where(eq(jobListings.id, id));
+    return job || undefined;
+  }
+
+  async getAllJobListings(): Promise<JobListing[]> {
+    return await db.select().from(jobListings).orderBy(desc(jobListings.postedDate));
+  }
+
+  async getActiveJobListings(): Promise<JobListing[]> {
+    return await db
+      .select()
+      .from(jobListings)
+      .where(eq(jobListings.status, 'active'))
+      .orderBy(desc(jobListings.postedDate));
+  }
+
+  async updateJobListing(id: number, updates: Partial<InsertJobListing>): Promise<JobListing> {
+    const [updated] = await db
+      .update(jobListings)
+      .set(updates)
+      .where(eq(jobListings.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteJobListing(id: number): Promise<void> {
+    await db.delete(jobListings).where(eq(jobListings.id, id));
+  }
+
+  // Career Services - Job Applications Implementation
+  async createJobApplication(application: InsertJobApplication): Promise<JobApplication> {
+    const [newApplication] = await db
+      .insert(jobApplications)
+      .values(application)
+      .returning();
+    return newApplication;
+  }
+
+  async getJobApplication(id: number): Promise<JobApplication | undefined> {
+    const [application] = await db.select().from(jobApplications).where(eq(jobApplications.id, id));
+    return application || undefined;
+  }
+
+  async getUserJobApplications(userId: number): Promise<JobApplication[]> {
+    return await db
+      .select()
+      .from(jobApplications)
+      .where(eq(jobApplications.userId, userId))
+      .orderBy(desc(jobApplications.appliedAt));
+  }
+
+  async getJobApplicationsForListing(jobId: number): Promise<JobApplication[]> {
+    return await db
+      .select()
+      .from(jobApplications)
+      .where(eq(jobApplications.jobId, jobId))
+      .orderBy(desc(jobApplications.appliedAt));
+  }
+
+  async updateJobApplication(id: number, updates: Partial<InsertJobApplication>): Promise<JobApplication> {
+    const [updated] = await db
+      .update(jobApplications)
+      .set(updates)
+      .where(eq(jobApplications.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Career Services - Resumes Implementation
+  async createResume(resume: InsertResume): Promise<Resume> {
+    const [newResume] = await db
+      .insert(resumes)
+      .values(resume)
+      .returning();
+    return newResume;
+  }
+
+  async getResume(id: number): Promise<Resume | undefined> {
+    const [resume] = await db.select().from(resumes).where(eq(resumes.id, id));
+    return resume || undefined;
+  }
+
+  async getUserResumes(userId: number): Promise<Resume[]> {
+    return await db
+      .select()
+      .from(resumes)
+      .where(eq(resumes.userId, userId))
+      .orderBy(desc(resumes.updatedAt));
+  }
+
+  async updateResume(id: number, updates: Partial<InsertResume>): Promise<Resume> {
+    const [updated] = await db
+      .update(resumes)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(resumes.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteResume(id: number): Promise<void> {
+    await db.delete(resumes).where(eq(resumes.id, id));
+  }
+
+  async setDefaultResume(userId: number, resumeId: number): Promise<void> {
+    await db
+      .update(resumes)
+      .set({ isDefault: false })
+      .where(eq(resumes.userId, userId));
+    
+    await db
+      .update(resumes)
+      .set({ isDefault: true })
+      .where(eq(resumes.id, resumeId));
+  }
+
+  // Career Services - Career Counseling Implementation
+  async scheduleCareerCounseling(session: InsertCareerCounseling): Promise<CareerCounseling> {
+    const [newSession] = await db
+      .insert(careerCounseling)
+      .values(session)
+      .returning();
+    return newSession;
+  }
+
+  async getCareerCounselingSession(id: number): Promise<CareerCounseling | undefined> {
+    const [session] = await db.select().from(careerCounseling).where(eq(careerCounseling.id, id));
+    return session || undefined;
+  }
+
+  async getUserCounselingSessions(userId: number): Promise<CareerCounseling[]> {
+    return await db
+      .select()
+      .from(careerCounseling)
+      .where(eq(careerCounseling.studentId, userId))
+      .orderBy(desc(careerCounseling.scheduledDate));
+  }
+
+  async getCounselorSessions(counselorId: number): Promise<CareerCounseling[]> {
+    return await db
+      .select()
+      .from(careerCounseling)
+      .where(eq(careerCounseling.counselorId, counselorId))
+      .orderBy(careerCounseling.scheduledDate);
+  }
+
+  async updateCounselingSession(id: number, updates: Partial<InsertCareerCounseling>): Promise<CareerCounseling> {
+    const [updated] = await db
+      .update(careerCounseling)
+      .set(updates)
+      .where(eq(careerCounseling.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Career Services - Companies Implementation
+  async createCompany(company: InsertCompany): Promise<Company> {
+    const [newCompany] = await db
+      .insert(companies)
+      .values(company)
+      .returning();
+    return newCompany;
+  }
+
+  async getCompany(id: number): Promise<Company | undefined> {
+    const [company] = await db.select().from(companies).where(eq(companies.id, id));
+    return company || undefined;
+  }
+
+  async getAllCompanies(): Promise<Company[]> {
+    return await db.select().from(companies).orderBy(companies.name);
+  }
+
+  async getActivePartners(): Promise<Company[]> {
+    return await db
+      .select()
+      .from(companies)
+      .where(eq(companies.partnershipStatus, 'active'))
+      .orderBy(companies.name);
+  }
+
+  async updateCompany(id: number, updates: Partial<InsertCompany>): Promise<Company> {
+    const [updated] = await db
+      .update(companies)
+      .set(updates)
+      .where(eq(companies.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Career Services - Career Events Implementation
+  async createCareerEvent(event: InsertCareerEvent): Promise<CareerEvent> {
+    const [newEvent] = await db
+      .insert(careerEvents)
+      .values(event)
+      .returning();
+    return newEvent;
+  }
+
+  async getCareerEvent(id: number): Promise<CareerEvent | undefined> {
+    const [event] = await db.select().from(careerEvents).where(eq(careerEvents.id, id));
+    return event || undefined;
+  }
+
+  async getUpcomingEvents(): Promise<CareerEvent[]> {
+    return await db
+      .select()
+      .from(careerEvents)
+      .where(sql`${careerEvents.date} > now()`)
+      .orderBy(careerEvents.date);
+  }
+
+  async registerForEvent(registration: InsertEventRegistration): Promise<EventRegistration> {
+    const [newRegistration] = await db
+      .insert(eventRegistrations)
+      .values(registration)
+      .returning();
+    return newRegistration;
+  }
+
+  async getEventRegistrations(eventId: number): Promise<EventRegistration[]> {
+    return await db
+      .select()
+      .from(eventRegistrations)
+      .where(eq(eventRegistrations.eventId, eventId));
+  }
+
+  async getUserEventRegistrations(userId: number): Promise<EventRegistration[]> {
+    return await db
+      .select()
+      .from(eventRegistrations)
+      .where(eq(eventRegistrations.userId, userId))
+      .orderBy(desc(eventRegistrations.registeredAt));
+  }
+
+  // Career Services - Alumni Network Implementation
+  async createAlumniProfile(profile: InsertAlumniProfile): Promise<AlumniProfile> {
+    const [newProfile] = await db
+      .insert(alumniProfiles)
+      .values(profile)
+      .returning();
+    return newProfile;
+  }
+
+  async getAlumniProfile(id: number): Promise<AlumniProfile | undefined> {
+    const [profile] = await db.select().from(alumniProfiles).where(eq(alumniProfiles.id, id));
+    return profile || undefined;
+  }
+
+  async getAlumniProfiles(): Promise<AlumniProfile[]> {
+    return await db.select().from(alumniProfiles).orderBy(desc(alumniProfiles.graduationYear));
+  }
+
+  async getMentorProfiles(): Promise<AlumniProfile[]> {
+    return await db
+      .select()
+      .from(alumniProfiles)
+      .where(eq(alumniProfiles.willingToMentor, true))
+      .orderBy(desc(alumniProfiles.graduationYear));
+  }
+
+  async requestMentorship(request: InsertMentorshipRequest): Promise<MentorshipRequest> {
+    const [newRequest] = await db
+      .insert(mentorshipRequests)
+      .values(request)
+      .returning();
+    return newRequest;
+  }
+
+  async getMentorshipRequests(mentorId: number): Promise<MentorshipRequest[]> {
+    return await db
+      .select()
+      .from(mentorshipRequests)
+      .where(eq(mentorshipRequests.mentorId, mentorId))
+      .orderBy(desc(mentorshipRequests.requestedAt));
+  }
+
+  async updateMentorshipRequest(id: number, updates: Partial<InsertMentorshipRequest>): Promise<MentorshipRequest> {
+    const [updated] = await db
+      .update(mentorshipRequests)
+      .set({ ...updates, respondedAt: new Date() })
+      .where(eq(mentorshipRequests.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Career Services - Internships Implementation
+  async createInternship(internship: InsertInternship): Promise<Internship> {
+    const [newInternship] = await db
+      .insert(internships)
+      .values(internship)
+      .returning();
+    return newInternship;
+  }
+
+  async getInternship(id: number): Promise<Internship | undefined> {
+    const [internship] = await db.select().from(internships).where(eq(internships.id, id));
+    return internship || undefined;
+  }
+
+  async getActiveInternships(): Promise<Internship[]> {
+    return await db
+      .select()
+      .from(internships)
+      .where(eq(internships.status, 'open'))
+      .orderBy(desc(internships.createdAt));
+  }
+
+  async getCompanyInternships(companyId: number): Promise<Internship[]> {
+    return await db
+      .select()
+      .from(internships)
+      .where(eq(internships.companyId, companyId))
+      .orderBy(desc(internships.createdAt));
+  }
+
+  async updateInternship(id: number, updates: Partial<InsertInternship>): Promise<Internship> {
+    const [updated] = await db
+      .update(internships)
+      .set(updates)
+      .where(eq(internships.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Career Services - Skills Assessment Implementation
+  async createSkillsAssessment(assessment: InsertSkillsAssessment): Promise<SkillsAssessment> {
+    const [newAssessment] = await db
+      .insert(skillsAssessments)
+      .values(assessment)
+      .returning();
+    return newAssessment;
+  }
+
+  async getUserAssessments(userId: number): Promise<SkillsAssessment[]> {
+    return await db
+      .select()
+      .from(skillsAssessments)
+      .where(eq(skillsAssessments.userId, userId))
+      .orderBy(desc(skillsAssessments.completedAt));
+  }
+
+  async getLatestAssessment(userId: number, type: string): Promise<SkillsAssessment | undefined> {
+    const [assessment] = await db
+      .select()
+      .from(skillsAssessments)
+      .where(and(
+        eq(skillsAssessments.userId, userId),
+        eq(skillsAssessments.assessmentType, type)
+      ))
+      .orderBy(desc(skillsAssessments.completedAt))
+      .limit(1);
+    return assessment || undefined;
+  }
+
+  // Career Services - Career Paths Implementation
+  async createCareerPath(path: InsertCareerPath): Promise<CareerPath> {
+    const [newPath] = await db
+      .insert(careerPaths)
+      .values(path)
+      .returning();
+    return newPath;
+  }
+
+  async getUserCareerPaths(userId: number): Promise<CareerPath[]> {
+    return await db
+      .select()
+      .from(careerPaths)
+      .where(eq(careerPaths.userId, userId))
+      .orderBy(desc(careerPaths.updatedAt));
+  }
+
+  async updateCareerPath(id: number, updates: Partial<InsertCareerPath>): Promise<CareerPath> {
+    const [updated] = await db
+      .update(careerPaths)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(careerPaths.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Career Services - Career Resources Implementation
+  async createCareerResource(resource: InsertCareerResource): Promise<CareerResource> {
+    const [newResource] = await db
+      .insert(careerResources)
+      .values(resource)
+      .returning();
+    return newResource;
+  }
+
+  async getCareerResource(id: number): Promise<CareerResource | undefined> {
+    const [resource] = await db.select().from(careerResources).where(eq(careerResources.id, id));
+    return resource || undefined;
+  }
+
+  async getCareerResources(category?: string): Promise<CareerResource[]> {
+    if (category) {
+      return await db
+        .select()
+        .from(careerResources)
+        .where(eq(careerResources.category, category))
+        .orderBy(desc(careerResources.views));
+    }
+    return await db.select().from(careerResources).orderBy(desc(careerResources.views));
+  }
+
+  async incrementResourceViews(id: number): Promise<void> {
+    await db
+      .update(careerResources)
+      .set({ views: sql`${careerResources.views} + 1` })
+      .where(eq(careerResources.id, id));
   }
 }
 
