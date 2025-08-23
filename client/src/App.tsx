@@ -68,6 +68,50 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect to="/login" />;
+  }
+
+  // Check if user has admin role
+  if (user?.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
+          <div className="text-red-500 mb-4">
+            <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+          <p className="text-gray-600 mb-6">You don't have permission to access the admin dashboard.</p>
+          <button 
+            onClick={() => window.location.href = '/app'}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function Router() {
   return (
     <Switch>
@@ -119,14 +163,14 @@ function Router() {
       </Route>
       {/* Keep old routes for backward compatibility */}
       <Route path="/admin">
-        <ProtectedRoute>
+        <AdminProtectedRoute>
           <AdminDashboard />
-        </ProtectedRoute>
+        </AdminProtectedRoute>
       </Route>
       <Route path="/dashboard">
-        <ProtectedRoute>
+        <AdminProtectedRoute>
           <AdminDashboard />
-        </ProtectedRoute>
+        </AdminProtectedRoute>
       </Route>
       <Route path="/problems">
         <ProtectedRoute>
@@ -169,9 +213,9 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/institutional-analytics">
-        <ProtectedRoute>
+        <AdminProtectedRoute>
           <InstitutionalAnalytics />
-        </ProtectedRoute>
+        </AdminProtectedRoute>
       </Route>
       <Route path="/course-management">
         <ProtectedRoute>
@@ -194,14 +238,14 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/predictive-analytics">
-        <ProtectedRoute>
+        <AdminProtectedRoute>
           <PredictiveAnalytics />
-        </ProtectedRoute>
+        </AdminProtectedRoute>
       </Route>
       <Route path="/lms-integration">
-        <ProtectedRoute>
+        <AdminProtectedRoute>
           <LmsIntegration />
-        </ProtectedRoute>
+        </AdminProtectedRoute>
       </Route>
       <Route path="/advanced-assessment">
         <ProtectedRoute>
@@ -214,9 +258,9 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/user-management">
-        <ProtectedRoute>
+        <AdminProtectedRoute>
           <AdminUserManagement />
-        </ProtectedRoute>
+        </AdminProtectedRoute>
       </Route>
       <Route path="/smart-recommendations">
         <ProtectedRoute>
