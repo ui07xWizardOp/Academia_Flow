@@ -55,6 +55,7 @@ interface ActionItem {
 }
 
 export class AILearningAssistant {
+  private static instance: AILearningAssistant;
   private openai: OpenAI | null;
   private sessions: Map<string, ChatSession> = new Map();
   private recommendationEngine: AIRecommendationEngine;
@@ -74,6 +75,13 @@ export class AILearningAssistant {
     }
     this.recommendationEngine = new AIRecommendationEngine();
     this.intelligentTutor = new IntelligentTutor();
+  }
+
+  static getInstance(): AILearningAssistant {
+    if (!AILearningAssistant.instance) {
+      AILearningAssistant.instance = new AILearningAssistant();
+    }
+    return AILearningAssistant.instance;
   }
 
   async startSession(userId: number): Promise<ChatSession> {

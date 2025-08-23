@@ -816,7 +816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/assistant/start", authenticateToken, async (req: any, res) => {
     try {
       const { AILearningAssistant } = await import("./ai-learning-assistant");
-      const assistant = new AILearningAssistant();
+      const assistant = AILearningAssistant.getInstance();
       const session = await assistant.startSession(req.user.id);
       
       res.json(session);
@@ -836,7 +836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const { AILearningAssistant } = await import("./ai-learning-assistant");
-      const assistant = new AILearningAssistant();
+      const assistant = AILearningAssistant.getInstance();
       const response = await assistant.processMessage(sessionId, message);
       
       res.json(response);
@@ -849,7 +849,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/ai/assistant/sessions", authenticateToken, async (req: any, res) => {
     try {
       const { AILearningAssistant } = await import("./ai-learning-assistant");
-      const assistant = new AILearningAssistant();
+      const assistant = AILearningAssistant.getInstance();
       const sessions = await assistant.getActiveSessions(req.user.id);
       
       res.json(sessions);
@@ -864,7 +864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { sessionId } = req.params;
       
       const { AILearningAssistant } = await import("./ai-learning-assistant");
-      const assistant = new AILearningAssistant();
+      const assistant = AILearningAssistant.getInstance();
       await assistant.endSession(sessionId);
       
       res.json({ success: true });
