@@ -70,7 +70,10 @@ export default function AIAssistant() {
 
   // Start a new chat session
   const startSessionMutation = useMutation({
-    mutationFn: () => apiRequest("/api/ai/assistant/start", "POST"),
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/ai/assistant/start");
+      return await response.json();
+    },
     onSuccess: (data) => {
       setCurrentSession(data);
       queryClient.invalidateQueries({ queryKey: ['/api/ai/assistant/sessions'] });
@@ -79,8 +82,10 @@ export default function AIAssistant() {
 
   // Send message
   const sendMessageMutation = useMutation({
-    mutationFn: (message: string) => 
-      apiRequest(`/api/ai/assistant/${currentSession?.sessionId}/message`, "POST", { message }),
+    mutationFn: async (message: string) => {
+      const response = await apiRequest("POST", `/api/ai/assistant/${currentSession?.sessionId}/message`, { message });
+      return await response.json();
+    },
     onSuccess: (response: AssistantResponse) => {
       if (currentSession) {
         const assistantMessage: ChatMessage = {
