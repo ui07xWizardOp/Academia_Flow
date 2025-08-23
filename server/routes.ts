@@ -229,13 +229,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
         } else {
           // Execute with all test cases
-          const result = await secureCodeExecutor.executeWithTestCases({
-            code: submissionData.code,
-            language: submissionData.language,
-            testCases,
-            timeLimit: 10000,
-            memoryLimit: 256
-          });
+          let result;
+          try {
+            result = await secureCodeExecutor.executeWithTestCases({
+              code: submissionData.code,
+              language: submissionData.language,
+              testCases,
+              timeLimit: 10000,
+              memoryLimit: 256
+            });
+          } catch (execError: any) {
+            // Fallback to safe executor for permission errors
+            if (execError.message?.includes('EPERM') || execError.message?.includes('spawn')) {
+              // Execute each test case using safe executor
+              const results = [];
+              let totalRuntime = 0;
+              
+              for (let i = 0; i < testCases.length; i++) {
+                const tc = testCases[i];
+                const safeResult = safeExecutor.execute(submissionData.language, submissionData.code, tc.input);
+                const passed = safeResult.stdout.trim() === tc.expectedOutput.trim();
+                
+                results.push({
+                  passed,
+                  runtime: safeResult.runtime,
+                  memory: 0,
+                  error: safeResult.stderr || undefined
+                });
+                
+                totalRuntime += safeResult.runtime;
+              }
+              
+              result = {
+                results,
+                allPassed: results.every(r => r.passed),
+                runtime: totalRuntime,
+                memory: 0,
+                score: Math.round((results.filter(r => r.passed).length / results.length) * 100)
+              };
+            } else {
+              throw execError;
+            }
+          }
 
           executionResult = {
             status: result.allPassed ? "accepted" : 

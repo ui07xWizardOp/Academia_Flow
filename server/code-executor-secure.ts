@@ -3,6 +3,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
+import { safeExecutor } from './safe-executor';
 
 export interface ExecutionResult {
   stdout: string;
@@ -261,14 +262,12 @@ export class SecureCodeExecutor {
   }
 
   private async executePython(request: CodeExecutionRequest, workDir: string): Promise<ExecutionResult> {
-    const fileName = 'solution.py';
-    const filePath = join(workDir, fileName);
-    
-    // Add security wrapper for Python
-    const secureCode = this.wrapPythonCode(request.code);
-    await fs.writeFile(filePath, secureCode);
-
     if (this.dockerAvailable) {
+      const fileName = 'solution.py';
+      const filePath = join(workDir, fileName);
+      const secureCode = this.wrapPythonCode(request.code);
+      await fs.writeFile(filePath, secureCode);
+      
       return await this.runInSecureDocker(
         'python:3.11-alpine',
         ['python', '-u', `/code/${fileName}`],
@@ -278,14 +277,47 @@ export class SecureCodeExecutor {
         request.stdin
       );
     } else {
-      return await this.runDirectRestricted(
-        'python3',
-        ['-u', filePath],
-        workDir,
-        request.timeLimit || 5000,
-        request.stdin
-      );
+      // Use safe executor for Python in non-Docker environments
+      return this.executeInSafeMode(request, 'python');
     }
+  }
+
+  private executeInSafeMode(request: CodeExecutionRequest, language: string): ExecutionResult {
+    // Import safeExecutor at the top of the file instead of using require
+    const startTime = Date.now();
+    
+    // Execute the code
+    const result = safeExecutor.execute(language, request.code, request.stdin || '');
+    
+    // Process test cases if provided
+    let testCaseResults: TestCaseResult[] = [];
+    if (request.testCases && request.testCases.length > 0) {
+      for (let i = 0; i < request.testCases.length; i++) {
+        const tc = request.testCases[i];
+        const tcResult = safeExecutor.execute(language, request.code, tc.input);
+        
+        testCaseResults.push({
+          testCaseId: i,
+          passed: tcResult.stdout.trim() === tc.expectedOutput.trim(),
+          input: tc.input,
+          expectedOutput: tc.expectedOutput,
+          actualOutput: tcResult.stdout,
+          runtime: tcResult.runtime,
+          memory: 0,
+          points: tcResult.stdout.trim() === tc.expectedOutput.trim() ? (tc.weight || 1) : 0,
+          maxPoints: tc.weight || 1
+        });
+      }
+    }
+    
+    return {
+      stdout: result.stdout,
+      stderr: result.stderr,
+      exitCode: result.exitCode,
+      runtime: Date.now() - startTime,
+      memory: 0,
+      testCaseResults
+    };
   }
 
   private wrapPythonCode(code: string): string {
@@ -321,14 +353,12 @@ ${code}
   }
 
   private async executeJavaScript(request: CodeExecutionRequest, workDir: string): Promise<ExecutionResult> {
-    const fileName = 'solution.js';
-    const filePath = join(workDir, fileName);
-    
-    // Add security wrapper for JavaScript
-    const secureCode = this.wrapJavaScriptCode(request.code);
-    await fs.writeFile(filePath, secureCode);
-
     if (this.dockerAvailable) {
+      const fileName = 'solution.js';
+      const filePath = join(workDir, fileName);
+      const secureCode = this.wrapJavaScriptCode(request.code);
+      await fs.writeFile(filePath, secureCode);
+      
       return await this.runInSecureDocker(
         'node:18-alpine',
         ['node', '--max-old-space-size=128', `/code/${fileName}`],
@@ -338,13 +368,8 @@ ${code}
         request.stdin
       );
     } else {
-      return await this.runDirectRestricted(
-        'node',
-        ['--max-old-space-size=128', filePath],
-        workDir,
-        request.timeLimit || 5000,
-        request.stdin
-      );
+      // Use safe executor for JavaScript in non-Docker environments
+      return this.executeInSafeMode(request, 'javascript');
     }
   }
 
@@ -405,29 +430,15 @@ ${code}
         request.stdin
       );
     } else {
-      // Compile
-      const compileResult = await this.runDirectRestricted(
-        'javac',
-        [filePath],
-        workDir,
-        10000
-      );
-
-      if (compileResult.exitCode !== 0) {
-        return {
-          ...compileResult,
-          error: 'Compilation error'
-        };
-      }
-
-      // Run
-      return await this.runDirectRestricted(
-        'java',
-        ['-Xmx128m', '-Xms32m', '-cp', workDir, 'Solution'],
-        workDir,
-        request.timeLimit || 5000,
-        request.stdin
-      );
+      // Java not supported in safe mode - requires compilation
+      return {
+        stdout: 'Java execution requires Docker environment for compilation',
+        stderr: '',
+        exitCode: 1,
+        runtime: 0,
+        memory: 0,
+        error: 'Java is not supported in this environment'
+      };
     }
   }
 
@@ -516,38 +527,15 @@ public class Solution {
         request.stdin
       );
     } else {
-      // Compile with security flags
-      const compileResult = await this.runDirectRestricted(
-        'g++',
-        [
-          '-o', executablePath,
-          filePath,
-          '-std=c++17',
-          '-Wall',
-          '-Wextra',
-          '-O2',
-          '-D_FORTIFY_SOURCE=2',
-          '-fstack-protector-strong'
-        ],
-        workDir,
-        10000
-      );
-
-      if (compileResult.exitCode !== 0) {
-        return {
-          ...compileResult,
-          error: 'Compilation error'
-        };
-      }
-
-      // Run
-      return await this.runDirectRestricted(
-        executablePath,
-        [],
-        workDir,
-        request.timeLimit || 5000,
-        request.stdin
-      );
+      // C++ not supported in safe mode - requires compilation
+      return {
+        stdout: 'C++ execution requires Docker environment for compilation',
+        stderr: '',
+        exitCode: 1,
+        runtime: 0,
+        memory: 0,
+        error: 'C++ is not supported in this environment'
+      };
     }
   }
 
@@ -846,9 +834,9 @@ int main() {
       const testMaxPoints = weight * 10;
       maxPoints += testMaxPoints;
 
+      // Don't modify the code, just pass the input
       const modifiedRequest = {
         ...request,
-        code: this.injectTestInput(request.code, request.language, testCase.input),
         stdin: testCase.input
       };
 

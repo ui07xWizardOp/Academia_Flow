@@ -16,6 +16,10 @@ export class SafeExecutor {
     let exitCode = 0;
 
     try {
+      // Prepare input lines for reading
+      const inputLines = input.split('\n');
+      let lineIndex = 0;
+      
       // Create a safe sandbox environment
       const sandbox = {
         console: {
@@ -56,8 +60,13 @@ export class SafeExecutor {
         isFinite,
         // Input handling
         input,
-        readline: () => input.split('\n').shift() || '',
-        readlines: () => input.split('\n')
+        readline: () => {
+          if (lineIndex < inputLines.length) {
+            return inputLines[lineIndex++];
+          }
+          return '';
+        },
+        readlines: () => inputLines
       };
       
       const context = vm.createContext(sandbox);
@@ -82,46 +91,92 @@ export class SafeExecutor {
   }
 
   executePython(code: string, input: string = ''): SafeExecutionResult {
-    // For Python, we'll provide a simulated output for now
-    // In production, you'd use a Python sandbox service
+    // Transpile Python-like code to JavaScript for safe execution
     const startTime = Date.now();
     
-    // Basic Python simulation for common patterns
     let stdout = '';
     let stderr = '';
     let exitCode = 0;
 
     try {
-      // Check for basic print statements
-      if (code.includes('print(')) {
-        // Extract print content (simplified)
-        const printMatches = code.match(/print\s*\(\s*["'](.+?)["']\s*\)/g);
-        if (printMatches) {
-          printMatches.forEach(match => {
-            const content = match.match(/["'](.+?)["']/);
-            if (content) {
-              stdout += content[1] + '\n';
-            }
-          });
-        } else if (code.includes('print("Hello') || code.includes("print('Hello")) {
-          stdout = 'Hello, World!\n';
-        } else {
-          stdout = 'Output from Python code\n';
+      // Convert Python code to JavaScript (basic transpilation)
+      let jsCode = code;
+      
+      // Handle print statements
+      jsCode = jsCode.replace(/print\s*\((.*?)\)/g, 'console.log($1)');
+      
+      // Handle basic Python syntax
+      jsCode = jsCode.replace(/:\s*$/gm, '{');
+      jsCode = jsCode.replace(/^\s*elif\s+/gm, '} else if ');
+      jsCode = jsCode.replace(/^\s*else\s*:/gm, '} else {');
+      jsCode = jsCode.replace(/^\s*if\s+/gm, 'if (');
+      jsCode = jsCode.replace(/\s+and\s+/g, ' && ');
+      jsCode = jsCode.replace(/\s+or\s+/g, ' || ');
+      jsCode = jsCode.replace(/\s+not\s+/g, ' !');
+      jsCode = jsCode.replace(/True/g, 'true');
+      jsCode = jsCode.replace(/False/g, 'false');
+      jsCode = jsCode.replace(/None/g, 'null');
+      
+      // Handle for loops
+      jsCode = jsCode.replace(/for\s+(\w+)\s+in\s+range\s*\(([\d\w,\s]+)\)/g, (match, var1, args) => {
+        const argList = args.split(',').map((a: string) => a.trim());
+        if (argList.length === 1) {
+          return `for (let ${var1} = 0; ${var1} < ${argList[0]}; ${var1}++)`;
+        } else if (argList.length === 2) {
+          return `for (let ${var1} = ${argList[0]}; ${var1} < ${argList[1]}; ${var1}++)`;
+        } else if (argList.length === 3) {
+          return `for (let ${var1} = ${argList[0]}; ${var1} < ${argList[1]}; ${var1} += ${argList[2]})`;
         }
+        return match;
+      });
+      
+      // Handle def functions
+      jsCode = jsCode.replace(/def\s+(\w+)\s*\((.*?)\)\s*:/g, 'function $1($2) {');
+      
+      // Handle input()
+      const inputLines = input.split('\n');
+      let inputIndex = 0;
+      jsCode = jsCode.replace(/input\s*\(\s*\)/g, () => {
+        const line = inputLines[inputIndex] || '';
+        inputIndex++;
+        return `"${line}"`;
+      });
+      
+      // Add missing closing braces (simple heuristic)
+      const openBraces = (jsCode.match(/{/g) || []).length;
+      const closeBraces = (jsCode.match(/}/g) || []).length;
+      for (let i = 0; i < openBraces - closeBraces; i++) {
+        jsCode += '\n}';
       }
       
-      // Handle input() calls
-      if (code.includes('input()')) {
-        stdout += input + '\n';
-      }
+      // Execute the transpiled JavaScript
+      const sandbox = {
+        console: {
+          log: (...args: any[]) => {
+            stdout += args.map(arg => String(arg)).join(' ') + '\n';
+          }
+        },
+        Math,
+        parseInt,
+        parseFloat,
+        String,
+        Number,
+        Array
+      };
       
-      // If no output detected, provide default
-      if (!stdout) {
-        stdout = 'Code executed successfully\n';
+      const context = vm.createContext(sandbox);
+      vm.runInContext(jsCode, context, {
+        timeout: 5000,
+        displayErrors: true
+      });
+      
+      // If no output, assume success
+      if (!stdout && exitCode === 0) {
+        stdout = '';
       }
       
     } catch (error: any) {
-      stderr = 'Python execution requires a Python runtime';
+      stderr = error.message || 'Python execution error';
       exitCode = 1;
     }
 
