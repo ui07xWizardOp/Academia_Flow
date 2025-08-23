@@ -1,44 +1,55 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import type { Problem } from "@shared/schema";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ProblemCard } from "@/components/problems/problem-card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ProblemFilters, type FilterState } from "@/components/problems/problem-filters";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Building2, Search, Filter } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 export default function Problems() {
   const [, setLocation] = useLocation();
-  const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
-  const [topicFilter, setTopicFilter] = useState<string>("all");
-  const [companyFilter, setCompanyFilter] = useState<string>("all");
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [filters, setFilters] = useState<FilterState>({
+    search: "",
+    difficulty: "all",
+    status: "all",
+    topics: [],
+    companies: []
+  });
 
   const { data: problems = [], isLoading, error } = useQuery<Problem[]>({
     queryKey: ['/api/problems'],
   });
 
   const handleSolveProblem = (problemId: number) => {
-    setLocation(`/code-editor?problem=${problemId}`);
+    setLocation(`/app/problems/${problemId}`);
   };
 
-  const filteredProblems = problems.filter((problem) => {
-    const matchesSearch = searchTerm === "" || 
-      problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      problem.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDifficulty = difficultyFilter === "all" || problem.difficulty === difficultyFilter;
-    const matchesTopic = topicFilter === "all" || problem.topics.includes(topicFilter);
-    const matchesCompany = companyFilter === "all" || (problem.companies || []).includes(companyFilter);
-    return matchesSearch && matchesDifficulty && matchesTopic && matchesCompany;
-  });
-
-  // Get unique values for filters
-  const allTopics = Array.from(new Set(problems.flatMap((p) => p.topics)));
-  const allCompanies = Array.from(new Set(problems.flatMap((p) => p.companies || []))).filter(Boolean).sort();
+  const filteredProblems = useMemo(() => {
+    return problems.filter((problem) => {
+      // Search filter
+      const matchesSearch = !filters.search || 
+        problem.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+        problem.description.toLowerCase().includes(filters.search.toLowerCase());
+      
+      // Difficulty filter
+      const matchesDifficulty = filters.difficulty === "all" || problem.difficulty === filters.difficulty;
+      
+      // Topics filter (match any selected topic)
+      const matchesTopics = filters.topics.length === 0 || 
+        filters.topics.some(topic => problem.topics.includes(topic));
+      
+      // Companies filter (match any selected company)
+      const matchesCompanies = filters.companies.length === 0 || 
+        filters.companies.some(company => (problem.companies || []).includes(company));
+      
+      // Status filter (would need user submission data)
+      // For now, we'll ignore status filter
+      
+      return matchesSearch && matchesDifficulty && matchesTopics && matchesCompanies;
+    });
+  }, [problems, filters]);
 
   if (isLoading) {
     return (
@@ -79,71 +90,23 @@ export default function Problems() {
       
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200 p-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Problem Library</h1>
-              <p className="text-gray-600 mt-1">Practice coding problems to improve your skills.</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search problems..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
-                  data-testid="input-search-problems"
-                />
-              </div>
-              
-              <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                <SelectTrigger className="w-40" data-testid="select-difficulty">
-                  <SelectValue placeholder="All Difficulties" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Difficulties</SelectItem>
-                  <SelectItem value="easy">Easy</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="hard">Hard</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Select value={topicFilter} onValueChange={setTopicFilter}>
-                <SelectTrigger className="w-40" data-testid="select-topic">
-                  <SelectValue placeholder="All Topics" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Topics</SelectItem>
-                  {allTopics.map((topic) => (
-                    <SelectItem key={topic} value={topic}>
-                      {topic}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={companyFilter} onValueChange={setCompanyFilter}>
-                <SelectTrigger className="w-40" data-testid="select-company">
-                  <SelectValue placeholder="All Companies" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Companies</SelectItem>
-                  {allCompanies.map((company) => (
-                    <SelectItem key={company} value={company}>
-                      {company}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-6">
+          <div className="container mx-auto">
+            <h1 className="text-3xl font-bold mb-2">Problem Library</h1>
+            <p className="text-purple-100">Master algorithms and data structures with real interview questions</p>
           </div>
         </div>
 
-        {/* Problems List */}
-        <div className="flex-1 overflow-auto p-6">
-          {filteredProblems.length === 0 ? (
+        {/* Filters and Problems */}
+        <div className="flex-1 overflow-auto">
+          <div className="container mx-auto p-6">
+            <ProblemFilters 
+              onFilterChange={setFilters}
+              totalProblems={problems.length}
+              filteredCount={filteredProblems.length}
+            />
+            
+            {filteredProblems.length === 0 ? (
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center py-8">
@@ -155,20 +118,7 @@ export default function Problems() {
                       : "Try adjusting your filters to see more problems."
                     }
                   </p>
-                  {difficultyFilter !== "all" || topicFilter !== "all" || companyFilter !== "all" || searchTerm !== "" ? (
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setDifficultyFilter("all");
-                        setTopicFilter("all");
-                        setCompanyFilter("all");
-                        setSearchTerm("");
-                      }}
-                      data-testid="button-clear-filters"
-                    >
-                      Clear Filters
-                    </Button>
-                  ) : null}
+                  {/* Clear filters button handled by ProblemFilters component */}
                 </div>
               </CardContent>
             </Card>
@@ -189,8 +139,9 @@ export default function Problems() {
                   onSolve={handleSolveProblem}
                 />
               ))}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

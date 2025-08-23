@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
 import { CodeEditor } from "@/components/code/code-editor";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,7 @@ export default function CodeEditorPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const params = useParams();
   
   const [language, setLanguage] = useState("python");
   const [code, setCode] = useState(defaultCode.python);
@@ -51,9 +52,11 @@ export default function CodeEditorPage() {
   const [activeTab, setActiveTab] = useState("console");
   const [qualityReport, setQualityReport] = useState<any>(null);
 
-  // Get problem ID from URL
+  // Get problem ID from route params or query string (for backward compatibility)
+  const problemIdFromRoute = params?.id;
   const urlParams = new URLSearchParams(window.location.search);
-  const problemId = urlParams.get("problem");
+  const problemIdFromQuery = urlParams.get("problem");
+  const problemId = problemIdFromRoute || problemIdFromQuery;
 
   const { data: problem, isLoading: problemLoading } = useQuery<Problem>({
     queryKey: ['/api/problems', problemId],

@@ -23,21 +23,21 @@ import {
   Sparkles,
   Brain,
   Zap,
-  Target
+  Target,
+  User
 } from "lucide-react";
 
 // Student navigation
 const studentNavigation = [
-  { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Problems", href: "/problems", icon: List },
-  { name: "Code Editor", href: "/code-editor", icon: Code },
-  { name: "Progress", href: "/progress", icon: TrendingUp },
-  { name: "Mock Interviews", href: "/interviews", icon: Mic },
-  { name: "AI Interview", href: "/ai-interview", icon: Bot },
-  { name: "Intelligent Tutoring", href: "/intelligent-tutoring", icon: Brain },
+  { name: "Dashboard", href: "/app", icon: Home },
+  { name: "Problems", href: "/app/problems", icon: List },
+  { name: "Submissions", href: "/app/submissions", icon: TrendingUp },
+  { name: "Mock Interview", href: "/app/interview", icon: Mic },
+  { name: "Study Groups", href: "/app/groups", icon: Users },
+  { name: "Profile", href: "/app/profile", icon: User },
+  { name: "AI Tutor", href: "/intelligent-tutoring", icon: Brain },
   { name: "Collaboration", href: "/collaboration", icon: UserCheck },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "Study Groups", href: "/study-groups", icon: Users },
 ];
 
 // Professor navigation
@@ -83,18 +83,18 @@ export function Sidebar() {
   return (
     <div className="w-64 bg-white shadow-lg border-r border-gray-200 flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-orange-50">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg overflow-hidden">
+          <div className="w-10 h-10 rounded-lg overflow-hidden bg-purple-100 p-1">
             <img 
               src={logoImage} 
-              alt="CodeLearn Logo" 
+              alt="UniLearn Logo" 
               className="w-full h-full object-contain"
             />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-gray-900">CodeLearn</h1>
-            <p className="text-sm text-gray-500">University Dashboard</p>
+            <h1 className="text-lg font-bold text-purple-700">UniLearn</h1>
+            <p className="text-sm text-purple-500">Learning Platform</p>
           </div>
         </div>
       </div>
@@ -103,7 +103,7 @@ export function Sidebar() {
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center space-x-3">
           <Avatar className="w-8 h-8">
-            <AvatarFallback className="bg-gray-300 text-gray-600 text-sm font-medium">
+            <AvatarFallback className="bg-purple-100 text-purple-700 text-sm font-medium">
               {user ? getInitials(user.name) : "U"}
             </AvatarFallback>
           </Avatar>
@@ -126,17 +126,18 @@ export function Sidebar() {
             user?.role === 'professor' ? professorNavigation :
             studentNavigation
           ).map((item) => {
-            const isActive = location === item.href;
+            const isActive = location === item.href || 
+              (item.href !== '/' && location.startsWith(item.href));
             const Icon = item.icon;
             
             return (
               <li key={item.name}>
                 <Link href={item.href}>
                   <div
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors cursor-pointer ${
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-all cursor-pointer ${
                       isActive
-                        ? "text-primary bg-primary/10"
-                        : "text-gray-600 hover:bg-gray-50"
+                        ? "text-white bg-gradient-to-r from-purple-600 to-purple-700 shadow-sm"
+                        : "text-gray-600 hover:bg-purple-50 hover:text-purple-700"
                     }`}
                     data-testid={`nav-${item.name.toLowerCase().replace(" ", "-")}`}
                   >

@@ -17,6 +17,8 @@ import AIInterview from "@/pages/ai-interview";
 import Collaboration from "@/pages/collaboration";
 import Analytics from "@/pages/analytics";
 import { lazy } from "react";
+import StudentProfile from "@/pages/student-profile";
+import Submissions from "@/pages/submissions";
 
 // Lazy load Stage 3 enterprise components
 const CourseManagement = lazy(() => import("./pages/course-management"));
@@ -59,37 +61,68 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/">
         <ProtectedRoute>
-          <Redirect to="/dashboard" />
+          <Redirect to="/app" />
         </ProtectedRoute>
       </Route>
-      <Route path="/dashboard">
+      <Route path="/app">
         <ProtectedRoute>
           <Dashboard />
         </ProtectedRoute>
       </Route>
-      <Route path="/problems">
+      <Route path="/app/problems">
         <ProtectedRoute>
           <Problems />
         </ProtectedRoute>
       </Route>
-      <Route path="/code-editor">
+      <Route path="/app/problems/:id">
         <ProtectedRoute>
           <CodeEditor />
         </ProtectedRoute>
       </Route>
-      <Route path="/progress">
+      <Route path="/app/submissions">
         <ProtectedRoute>
-          <ProgressPage />
+          <Submissions />
         </ProtectedRoute>
       </Route>
-      <Route path="/interviews">
+      <Route path="/app/interview">
         <ProtectedRoute>
           <Interviews />
         </ProtectedRoute>
       </Route>
-      <Route path="/study-groups">
+      <Route path="/app/interview/session/:id">
+        <ProtectedRoute>
+          <AIInterview />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/app/groups">
         <ProtectedRoute>
           <StudyGroups />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/app/profile">
+        <ProtectedRoute>
+          <StudentProfile />
+        </ProtectedRoute>
+      </Route>
+      {/* Keep old routes for backward compatibility */}
+      <Route path="/dashboard">
+        <ProtectedRoute>
+          <Redirect to="/app" />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/problems">
+        <ProtectedRoute>
+          <Redirect to="/app/problems" />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/progress">
+        <ProtectedRoute>
+          <Redirect to="/app/submissions" />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/study-groups">
+        <ProtectedRoute>
+          <Redirect to="/app/groups" />
         </ProtectedRoute>
       </Route>
       <Route path="/settings">
@@ -99,7 +132,7 @@ function Router() {
       </Route>
       <Route path="/ai-interview">
         <ProtectedRoute>
-          <AIInterview />
+          <Redirect to="/app/interview" />
         </ProtectedRoute>
       </Route>
       <Route path="/collaboration">
