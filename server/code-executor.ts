@@ -567,6 +567,78 @@ export class CodeExecutor {
     }
   }
 
+  // Public method to run code with test cases
+  async runWithTestCases(request: {
+    code: string;
+    language: string;
+    testCases: TestCase[];
+    timeLimit?: number;
+    memoryLimit?: number;
+  }): Promise<{
+    passed: number;
+    total: number;
+    testResults: Array<{
+      testCase: TestCase;
+      passed: boolean;
+      actualOutput: string;
+      error?: string;
+      runtime: number;
+    }>;
+    runtime: number;
+    memory: number;
+    error?: string;
+  }> {
+    const testResults = [];
+    let passed = 0;
+    let totalRuntime = 0;
+    let maxMemory = 0;
+
+    for (const testCase of request.testCases) {
+      try {
+        const result = await this.executeCode({
+          code: request.code,
+          language: request.language,
+          testCases: [testCase],
+          timeLimit: request.timeLimit,
+          memoryLimit: request.memoryLimit
+        });
+
+        const actualOutput = result.stdout.trim();
+        const expectedOutput = testCase.expectedOutput.trim();
+        const testPassed = actualOutput === expectedOutput;
+
+        if (testPassed) passed++;
+
+        testResults.push({
+          testCase,
+          passed: testPassed,
+          actualOutput,
+          runtime: result.runtime,
+          error: result.error
+        });
+
+        totalRuntime += result.runtime;
+        maxMemory = Math.max(maxMemory, result.memory);
+      } catch (error) {
+        testResults.push({
+          testCase,
+          passed: false,
+          actualOutput: '',
+          runtime: 0,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+
+    return {
+      passed,
+      total: request.testCases.length,
+      testResults,
+      runtime: totalRuntime,
+      memory: maxMemory
+    };
+  }
+
   // Public method to check execution environment status
   public getExecutionMode(): string {
     return this.dockerAvailable ? 'Docker (Secure)' : 'Direct (Development)';

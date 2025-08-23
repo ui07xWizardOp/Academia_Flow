@@ -1097,7 +1097,9 @@ export class RealtimeCollaboration {
       currentProblemId: group.currentProblemId,
       progress: Array.from(group.progress.entries()).map(([userId, prog]) => ({
         userId,
-        ...prog
+        problemsSolved: prog.problemsSolved,
+        timeSpent: prog.timeSpent,
+        lastActive: prog.lastActive
       })),
       resources: group.resources,
       createdAt: group.createdAt

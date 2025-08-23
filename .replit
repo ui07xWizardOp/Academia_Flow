@@ -7,7 +7,7 @@ channel = "stable-25_05"
 packages = ["docker", "glibcLocales", "python3", "gcc", "openjdk17"]
 
 [deployment]
-deploymentTarget = "autoscale"
+deploymentTarget = "gce"
 run = ["npm", "run", "start"]
 build = ["npm", "run", "build"]
 

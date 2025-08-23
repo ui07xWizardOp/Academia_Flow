@@ -140,7 +140,7 @@ export class AIAutomatedGrader {
     } catch (error) {
       return {
         passed: 0,
-        total: problem.testCases?.length || 0,
+        total: Array.isArray(problem.testCases) ? problem.testCases.length : 0,
         error: error instanceof Error ? error.message : 'Execution failed'
       };
     }
