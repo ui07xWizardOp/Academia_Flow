@@ -4,6 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { AccessibilityProvider } from "@/contexts/accessibility-context";
+import { SkipLinks } from "@/components/accessibility/skip-links";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
@@ -38,6 +40,7 @@ import IntelligentTutoring from "@/pages/intelligent-tutoring";
 import PredictiveAnalytics from "@/pages/predictive-analytics";
 import LmsIntegration from "@/pages/lms-integration";
 import InstitutionalAnalytics from "@/pages/institutional-analytics";
+import AccessibilitySettings from "@/pages/accessibility-settings";
 
 // Lazy load additional components if needed
 const AdvancedAssessment = lazy(() => import("./pages/advanced-assessment"));
@@ -205,9 +208,9 @@ function Router() {
           <AdvancedAssessment />
         </ProtectedRoute>
       </Route>
-      <Route path="/lms-integration">
+      <Route path="/accessibility-settings">
         <ProtectedRoute>
-          <LmsIntegration />
+          <AccessibilitySettings />
         </ProtectedRoute>
       </Route>
       <Route path="/user-management">
@@ -215,29 +218,9 @@ function Router() {
           <AdminUserManagement />
         </ProtectedRoute>
       </Route>
-      <Route path="/ai-content-generation">
-        <ProtectedRoute>
-          <AiContentGeneration />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/intelligent-tutoring">
-        <ProtectedRoute>
-          <IntelligentTutoring />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/automated-grading">
-        <ProtectedRoute>
-          <AutomatedGrading />
-        </ProtectedRoute>
-      </Route>
       <Route path="/smart-recommendations">
         <ProtectedRoute>
           <SmartRecommendations />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/predictive-analytics">
-        <ProtectedRoute>
-          <PredictiveAnalytics />
         </ProtectedRoute>
       </Route>
       <Route path="/app/ai-assistant">
@@ -290,10 +273,13 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <AccessibilityProvider>
+          <TooltipProvider>
+            <SkipLinks />
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </AccessibilityProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

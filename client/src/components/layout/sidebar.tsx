@@ -12,6 +12,7 @@ import {
   Users,
   Settings,
   LogOut,
+  Accessibility,
   Bot,
   UserCheck,
   BarChart3,
@@ -53,6 +54,7 @@ const studentNavigation = [
   { name: "Alumni Network", href: "/career/alumni", icon: Network },
   { name: "Internships", href: "/career/internships", icon: Building2 },
   { name: "Skills Assessment", href: "/career/skills", icon: Brain },
+  { name: "Accessibility", href: "/accessibility-settings", icon: Accessibility },
 ];
 
 // Professor navigation
@@ -65,6 +67,7 @@ const professorNavigation = [
   { name: "Automated Grading", href: "/automated-grading", icon: Zap },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Collaboration", href: "/collaboration", icon: UserCheck },
+  { name: "Accessibility", href: "/accessibility-settings", icon: Accessibility },
 ];
 
 // Admin navigation  
@@ -81,6 +84,7 @@ const adminNavigation = [
   { name: "Smart Recommendations", href: "/smart-recommendations", icon: Target },
   { name: "Predictive Analytics", href: "/predictive-analytics", icon: Brain },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Accessibility", href: "/accessibility-settings", icon: Accessibility },
 ];
 
 export function Sidebar() {
