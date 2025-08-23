@@ -1,0 +1,356 @@
+Front-End Specification (v1)
+1) Product Overview & Goals
+
+Audience: CS students, professors/TAs, career services, admins.
+
+Primary Jobs-to-be-Done (JTBD):
+
+Students: practice coding, run code safely, get AI feedback, prep interviews, track progress.
+
+Professors/TAs: assign problems, auto-grade, monitor progress, detect plagiarism.
+
+Career services: measure career-readiness, run mock interviews, export reports.
+
+Admins: license mgmt, usage/ROI dashboards, SSO/LMS integrations.
+
+Non-goals (v1): non-CS content authoring, marketplace, payments.
+
+2) Information Architecture & Routes
+
+Route patterns assume React + TS + Router. All pages have light/dark support and role-gated access.
+
+Public
+
+/ — Marketing/landing
+
+/login, /register, /forgot-password
+
+/legal/{privacy|terms}
+
+Student App
+
+/app — Home dashboard (recent problems, streaks, upcoming interviews)
+
+/app/problems — Library (filters, tags, difficulty)
+
+/app/problems/:id — Problem detail + code IDE
+
+/app/submissions — History + diff/metrics
+
+/app/interview — AI mock interview lobby
+
+/app/interview/session/:id — Live interview (voice/video optional)
+
+/app/groups — Study groups/collaboration rooms
+
+/app/profile — Skills, badges, resume links
+
+Professor/TA
+
+/faculty/courses — Course list
+
+/faculty/courses/:id — Roster, assignments, insights
+
+/faculty/assignments/new — Builder (select problem bank or create)
+
+/faculty/reviews — Code review queue, plagiarism flags
+
+Career Services
+
+/career/overview — Cohort readiness dashboards
+
+/career/mock-fairs — Timetables, interview banks
+
+Admin
+
+/admin/overview — Org usage & ROI
+
+/admin/users — Roles, provisioning
+
+/admin/integrations — SSO/LMS keys
+
+/admin/settings — Branding, policies
+
+Shared Utilities
+
+/settings — Personal settings (theme, notifications, devices)
+
+/help — Docs, shortcuts, contact support
+
+/* — 404
+
+3) Page Templates (Key Screens)
+
+Student Dashboard (/app)
+
+Regions: Header (search, notifications), KPI row (streak, solved, time), “Continue where you left off”, Recommended problems, Upcoming interviews, Group cards.
+
+Empty states: “No submissions yet” with “Start your first problem”.
+
+Problem Detail + IDE (/app/problems/:id)
+
+Left: Problem tabs (Description, Examples, Constraints, Hints).
+
+Center: Monaco editor (language selector, lint, format).
+
+Right: Test panel (public/hidden results), Complexity hints, AI Coach chat.
+
+Footer bar: Run, Submit, Reset, Time/Mem meter.
+
+Error states: compile/runtime timeout, sandbox blocked syscalls.
+
+Interview Session (/app/interview/session/:id)
+
+Layout: Question pane, mic/cam controls, timer, transcript, AI feedback tabs (Structure, Clarity, Coverage, Code).
+
+Actions: Start, Pause, End, Download report (PDF).
+
+Faculty Course (/faculty/courses/:id)
+
+Sections: Roster table (filters), Assignments, Insights (risk students), Code similarity heatmap, Export CSV.
+
+Admin Overview (/admin/overview)
+
+Widgets: MAU, DAU, Avg session time, Course coverage, Cost per active student, AI usage.
+
+4) Component Library (Atomic → Composite)
+
+Atoms
+
+Buttons: Button, IconButton (sizes: sm/md/lg; variants: solid/outline/ghost; states: default/hover/active/disabled/loading).
+
+Inputs: TextField, Select, Checkbox, Switch, Textarea, Tag.
+
+Indicators: Badge, Tooltip, Toast, Spinner, Progress.
+
+Typography: H1–H6, Body, Caption, Code.
+
+Molecules
+
+SearchBar (debounced), FilterBar (chips + dropdowns), StatCard, UserAvatar, EmptyState, Pagination, Tabs, Accordion, Modal, Drawer.
+
+Organisms
+
+AppShell (Sidebar + Topbar), ProblemCard, ProblemFilters, SubmissionTable, RosterTable, SimilarityHeatmap, ChartCard, InterviewControls, TranscriptPanel, AIChatPanel.
+
+Layout
+
+Grid system (12-col; gutters 16/24px), Responsive containers (xs/sm/md/lg/xl).
+
+5) Design Tokens & Theming
+
+Typography
+
+Font family: Poppins (UI), Roboto Mono (code).
+
+Scale: 12, 14, 16 (base), 18, 20, 24, 32, 40.
+
+Color (Light Mode)
+
+--brand-purple:#5A0FC8
+
+--brand-purple-900:#2A004F
+
+--accent-orange:#FF8C32
+
+--accent-yellow:#FFB84D
+
+--accent-pink:#C13584
+
+--text:#1C1C1C, --text-muted:#5A5A5A, --bg:#FFFFFF, --surface:#F7F7FA, --border:#E6E6EF
+
+Color (Dark Mode)
+
+--bg:#0F0A1A, --surface:#1B1230, --text:#FFFFFF, --text-muted:#C9C9D6
+
+Adjusted accents for contrast (auto-AA).
+
+Radius & Elevation
+
+Radius: 12 / 16 / 20.
+
+Shadows: xs, sm, md, lg with soft purple glow option for CTAs.
+
+Motion
+
+Duration: 120ms (ui), 240ms (panels), 400ms (major).
+
+Easing: cubic-bezier(0.2,0.8,0.2,1); reduce-motion respect.
+
+6) State Management & Data Flow
+
+Client State
+
+Library: Redux Toolkit + RTK Query.
+
+Slices: auth, user, problems, submissions, interview, groups, courses, admin, ui (theme, toasts).
+
+Caching & Invalidation
+
+RTK Query tags: Problem, Submission, Assignment, Course, User, Interview.
+
+Invalidate on create/update/delete; background refetch on focus.
+
+Offline & Persistence
+
+Persist auth.refreshToken (httpOnly cookie), ui.theme, lastOpenedProblemId.
+
+7) API Contracts (Frontend Expectations)
+
+JSON schemas are trimmed for brevity but explicit enough for backend alignment.
+
+Auth
+
+POST /api/v1/auth/login → { email, password } → { accessToken, refreshToken, user:{id,role,name,avatar} }
+
+POST /api/v1/auth/refresh → { refreshToken } → { accessToken }
+
+Problems
+
+GET /api/v1/problems?search=&tags=&difficulty=&page=&limit=
+
+Response: { items:[{id,title,difficulty,tags,successRate,estTime}], page, total }
+
+GET /api/v1/problems/:id → { id, title, bodyMD, examples, constraints, languages, starterCode, tests:{publicCount} }
+
+Code Execution
+
+POST /api/v1/execute → { lang, code, problemId, stdin? } → { stdout, stderr, timeMs, memoryKb, status:'OK'|'CE'|'RE'|'TLE' }
+
+Submissions
+
+POST /api/v1/submissions → { problemId, lang, code } → { id, verdict:'PASS'|'FAIL', passed, total, metrics:{timeMs, memoryKb}, quality:{lint, complexity}, createdAt }
+
+GET /api/v1/submissions?problemId=&userId= → list
+
+AI Coach / Review
+
+POST /api/v1/ai/coach → { context:{problemId, language}, code } → { feedback:[{type, message, line?}], suggestions, complexityEstimate }
+
+Interviews
+
+POST /api/v1/interviews → create session { id, kind:'dsalgo'|'system'|'behavioural', startAt }
+
+Live WS /ws/interview/:id events:
+
+question, transcript, scoreUpdate, timer, end
+
+GET /api/v1/interviews/:id/report → { overallScore, criteria:[{name,score,notes}], transcript, recommendations }
+
+Faculty
+
+GET /api/v1/courses, GET /api/v1/courses/:id
+
+POST /api/v1/assignments → { courseId, problemIds[], dueAt, grading:{auto:true|false, weight} }
+
+GET /api/v1/plagiarism?assignmentId= → { pairs:[{aSubmissionId,bSubmissionId, similarity:0-1}] }
+
+Admin
+
+GET /api/v1/admin/metrics → { mau, dau, avgSession, activeCourses, costPerStudent }
+
+POST /api/v1/admin/users/role → update role
+
+POST /api/v1/admin/integrations → LMS/SSO config
+
+8) Critical UX Flows
+
+Solve & Submit
+
+Open problem → editor loads starter code → Run (receive output + metrics) → AI Coach suggests fixes → Submit → show pass/fail + deltas → offer “Similar problems” or “View editorial” (if enabled).
+
+AI Interview
+
+Lobby → choose track (DSA/System/Behavioral), difficulty, duration → device check → live session → real-time transcript/coach hints (toggle) → summary report with rubric scores and next-steps.
+
+Faculty Assignment
+
+Choose course → “Create assignment” → select problems → set due, weight, grading → publish → monitor heatmap + risk alerts → export CSV.
+
+9) Accessibility (WCAG 2.1 AA)
+
+Color contrast ≥ 4.5:1 for text; ≥ 3:1 for large text/UI graphics.
+
+Focus order predictable; visible focus rings.
+
+Keyboard support: all interactive elements tabbable with logical order; skip-to-content link.
+
+ARIA: labels for icons (e.g., aria-label="Run code"), aria-live="polite" for toast/scores; transcripts for audio.
+
+Motion: respect prefers-reduced-motion; provide non-animated fallbacks.
+
+10) Responsiveness
+
+Breakpoints: xs <480, sm 480–767, md 768–1023, lg 1024–1439, xl ≥1440.
+
+IDE page:
+
+xl/lg: 3-pane (problem | editor | tests/coach).
+
+md: 2-pane with collapsible right panel.
+
+sm/xs: stacked tabs (Problem / Code / Results).
+
+Tables become cards on sm/xs; persistent actions float as FAB.
+
+11) Loading, Error, Empty & Skeletons
+
+Skeletons: cards, table rows (3–5), code editor shimmer, chart placeholders.
+
+Errors: inline banners with retry; execution panel shows stderr + tips.
+
+Empty states: contextual CTA + quick links (e.g., “Try a Beginner problem”).
+
+Toasts: success (submission stored), warning (rate limited), error (network).
+
+12) Security & Permissions (Client)
+
+Role-based UI: student, ta, professor, career, admin.
+
+Guarded routes: redirect to /login or /403.
+
+Token handling: access token in memory; refresh via httpOnly cookie; logout clears sensitive state.
+
+Sensitive views (grades, similarity): watermark user/email; prevent accidental sharing via copy banners.
+
+13) Performance Budgets
+
+TTI (app shell): ≤ 2.5s on 3G Fast; LCP: ≤ 2.5s.
+
+Bundle size target: initial < 250KB gz (code-split Monaco & interview).
+
+RT latency goals: code run round-trip < 2s; interview transcript update < 300ms P95.
+
+Use Vite + dynamic imports; cache fonts; prefetch next routes.
+
+14) Analytics & Telemetry
+
+Events: ProblemViewed, RunClicked, SubmitClicked, InterviewStarted/Ended, AssignmentPublished, PlagiarismViewed, RoleChanged.
+
+User properties: role, cohort, courseId (PII-safe).
+
+Error tracking: Sentry with release tags; session replay (masked inputs).
+
+15) Testing Strategy
+
+Unit: components + reducers (Jest).
+
+Integration: RTK Query endpoints mocked; routing guards.
+
+E2E: cypress flows (solve/submit, create assignment, interview session).
+
+Accessibility tests: axe-core CI gate.
+
+Visual regression: Chromatic/Storybook snapshots for atoms/molecules.
+
+16) Definition of Done (Per Feature)
+
+Designs implemented to tokens; light/dark parity.
+
+States covered (loading/empty/error/success).
+
+a11y passes (keyboard, contrast, labels).
+
+Tests: unit ≥ 80%, E2E happy path, no high-severity console errors.
+
+Telemetry events firing; docs in Storybook.

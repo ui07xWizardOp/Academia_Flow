@@ -1,0 +1,112 @@
+1.3 Clear Space & Sizing
+
+Minimum padding: X height = width of < symbol around logo.
+
+Minimum digital size: 32×32 px (favicon).
+
+Minimum print size: 15 mm height.
+
+2. Color Palette
+
+Your logo already sets a purple–orange–neon theme. Let’s systemize:
+
+Usage	HEX	RGB	Notes
+Primary Brand Purple	#5A0FC8	(90, 15, 200)	Hero background, buttons
+Secondary Purple (Dark)	#2A004F	(42, 0, 79)	App navbars, sidebars
+Highlight Orange	#FF8C32	(255, 140, 50)	Logo braces, CTAs
+Bright Accent Yellow	#FFB84D	(255, 184, 77)	Hover states, success
+Supporting Pink	#C13584	(193, 53, 132)	Charts, highlights
+Neon Purple Accent	#A64DFF	(166, 77, 255)	Links, hover highlights
+Text Black (High Contrast)	#1C1C1C	(28, 28, 28)	Body text
+Text White	#FFFFFF	(255, 255, 255)	On purple/orange
+Neutral Gray	#A0A0A0	(160, 160, 160)	Subtext, borders
+3. Typography
+
+Primary Font: Poppins (Google Fonts)
+
+Headings: Bold (600–700)
+
+Subheadings: SemiBold (500)
+
+Body: Regular (400)
+
+Rounded, modern, highly legible on digital screens.
+
+Secondary Font: Roboto Mono (for coding snippets, inline commands, or dashboard code displays).
+
+Accessibility Note: Maintain minimum contrast ratio 4.5:1 for text vs. background.
+
+4. Iconography & UI Elements
+
+Icon Set: Use Lucide (modern, outlined icons) for dashboard navigation.
+
+Style: Rounded corners, consistent stroke width (2px).
+
+Examples:
+
+Dashboard → pie chart
+
+Coding Environment → code brackets {}
+
+AI Interview → microphone / chat bubble
+
+Collaboration → people/handshake
+
+5. UI Components (Design System)
+5.1 Buttons
+
+Primary CTA: Filled Orange (#FF8C32), text white, shadow glow.
+
+Secondary CTA: Outlined Purple (#5A0FC8 border), text #5A0FC8.
+
+Hover/Focus: Slight scale-up (1.05x), color shift to lighter variant.
+
+5.2 Cards
+
+Rounded corners: 16–20px.
+
+Shadows: Soft glow in purple or neutral gray.
+
+Background: White for readability, with purple/orange accent bar on top.
+
+5.3 Navigation
+
+Sidebar (Desktop): Dark Purple (#2A004F), icons in neon purple/orange.
+
+Top Navbar (Mobile): Flat purple (#5A0FC8) with white logo.
+
+6. Data Visualization
+
+Charts & Graphs Palette:
+
+Blue-Purple (#5A0FC8) – Primary
+
+Orange (#FF8C32) – Highlight
+
+Pink (#C13584) – Alerts/Secondary
+
+Yellow (#FFB84D) – Success
+
+Style: Rounded chart edges, gradient fills, animated transitions.
+
+7. Accessibility Guidelines
+
+Color Blindness: Provide alternative color indicators (icons + patterns).
+
+Keyboard Navigation: Ensure all CTAs, navbars, and forms are tabbable.
+
+Screen Reader Labels: Every icon should have aria-label.
+
+Contrast: Follow WCAG AA at minimum.
+
+8. Brand Voice (UI Copy)
+
+Tone: Empowering, approachable, and academic yet modern.
+
+Examples:
+
+“🚀 Ready to ace your next interview?”
+
+“Track your progress, build your future.”
+
+“Collaborate, code, and grow smarter with AI.”
