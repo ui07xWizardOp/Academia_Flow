@@ -33,6 +33,7 @@ const studentNavigation = [
   { name: "Problems", href: "/app/problems", icon: List },
   { name: "Submissions", href: "/app/submissions", icon: TrendingUp },
   { name: "Mock Interview", href: "/app/interview", icon: Mic },
+  { name: "AI Assistant", href: "/app/ai-assistant", icon: Bot },
   { name: "Study Groups", href: "/app/groups", icon: Users },
   { name: "Profile", href: "/app/profile", icon: User },
   { name: "AI Tutor", href: "/intelligent-tutoring", icon: Brain },

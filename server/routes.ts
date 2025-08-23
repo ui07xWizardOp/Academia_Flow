@@ -568,6 +568,221 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Code Review Routes
+  app.post("/api/ai/code-review", authenticateToken, async (req: any, res) => {
+    try {
+      const { code, language, problemContext, userLevel } = req.body;
+      
+      if (!code || !language) {
+        return res.status(400).json({ message: "Code and language are required" });
+      }
+      
+      const { AICodeReviewer } = await import("./ai-code-review");
+      const reviewer = new AICodeReviewer();
+      const review = await reviewer.reviewCode(code, language, problemContext, userLevel);
+      
+      res.json(review);
+    } catch (error) {
+      console.error("Code review error:", error);
+      res.status(500).json({ message: "Failed to review code" });
+    }
+  });
+
+  app.post("/api/ai/code-review/live", authenticateToken, async (req: any, res) => {
+    try {
+      const { code, language, changeContext } = req.body;
+      
+      const { AICodeReviewer } = await import("./ai-code-review");
+      const reviewer = new AICodeReviewer();
+      const feedback = await reviewer.provideLiveFeedback(code, language, changeContext);
+      
+      res.json(feedback);
+    } catch (error) {
+      console.error("Live feedback error:", error);
+      res.status(500).json({ message: "Failed to provide feedback" });
+    }
+  });
+
+  // AI Recommendations Routes
+  app.get("/api/ai/recommendations/:userId", authenticateToken, async (req: any, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      const { AIRecommendationEngine } = await import("./ai-recommendations");
+      const engine = new AIRecommendationEngine();
+      const recommendations = await engine.generatePersonalizedRecommendations(userId);
+      
+      res.json(recommendations);
+    } catch (error) {
+      console.error("Recommendations error:", error);
+      res.status(500).json({ message: "Failed to generate recommendations" });
+    }
+  });
+
+  // AI Content Generation Routes
+  app.post("/api/ai/generate-problem", authenticateToken, async (req: any, res) => {
+    try {
+      const { topic, difficulty, concepts, style, company } = req.body;
+      
+      const { AIContentGenerator } = await import("./ai-content-generation");
+      const generator = new AIContentGenerator();
+      const content = await generator.generateProblem({
+        topic,
+        difficulty,
+        concepts,
+        style,
+        company
+      });
+      
+      res.json(content);
+    } catch (error) {
+      console.error("Content generation error:", error);
+      res.status(500).json({ message: "Failed to generate problem" });
+    }
+  });
+
+  app.post("/api/ai/generate-problems-bulk", authenticateToken, async (req: any, res) => {
+    try {
+      const { count, options } = req.body;
+      
+      if (!count || count > 10) {
+        return res.status(400).json({ message: "Count must be between 1 and 10" });
+      }
+      
+      const { AIContentGenerator } = await import("./ai-content-generation");
+      const generator = new AIContentGenerator();
+      const problems = await generator.generateBulkProblems(count, options);
+      
+      res.json(problems);
+    } catch (error) {
+      console.error("Bulk generation error:", error);
+      res.status(500).json({ message: "Failed to generate problems" });
+    }
+  });
+
+  // AI Grading Routes
+  app.post("/api/ai/grade-submission", authenticateToken, async (req: any, res) => {
+    try {
+      const { submissionId, rubric } = req.body;
+      
+      const submission = await storage.getSubmission(submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+      
+      const problem = await storage.getProblem(submission.problemId);
+      if (!problem) {
+        return res.status(404).json({ message: "Problem not found" });
+      }
+      
+      const { AIAutomatedGrader } = await import("./ai-grading");
+      const grader = new AIAutomatedGrader();
+      const result = await grader.gradeSubmission(submission, problem, rubric);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Grading error:", error);
+      res.status(500).json({ message: "Failed to grade submission" });
+    }
+  });
+
+  app.post("/api/ai/grade-batch", authenticateToken, async (req: any, res) => {
+    try {
+      const { submissionIds, rubric } = req.body;
+      
+      if (!submissionIds || !Array.isArray(submissionIds)) {
+        return res.status(400).json({ message: "Submission IDs array required" });
+      }
+      
+      const submissions = await Promise.all(
+        submissionIds.map((id: number) => storage.getSubmission(id))
+      );
+      
+      const problemMap = new Map();
+      for (const sub of submissions) {
+        if (sub && !problemMap.has(sub.problemId)) {
+          const problem = await storage.getProblem(sub.problemId);
+          if (problem) problemMap.set(sub.problemId, problem);
+        }
+      }
+      
+      const { AIAutomatedGrader } = await import("./ai-grading");
+      const grader = new AIAutomatedGrader();
+      const results = await grader.gradeBatch(
+        submissions.filter((s: any) => s !== undefined),
+        problemMap,
+        rubric
+      );
+      
+      res.json(results);
+    } catch (error) {
+      console.error("Batch grading error:", error);
+      res.status(500).json({ message: "Failed to grade batch" });
+    }
+  });
+
+  // AI Learning Assistant Routes
+  app.post("/api/ai/assistant/start", authenticateToken, async (req: any, res) => {
+    try {
+      const { AILearningAssistant } = await import("./ai-learning-assistant");
+      const assistant = new AILearningAssistant();
+      const session = await assistant.startSession(req.user.id);
+      
+      res.json(session);
+    } catch (error) {
+      console.error("Assistant start error:", error);
+      res.status(500).json({ message: "Failed to start assistant session" });
+    }
+  });
+
+  app.post("/api/ai/assistant/:sessionId/message", authenticateToken, async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { message } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+      
+      const { AILearningAssistant } = await import("./ai-learning-assistant");
+      const assistant = new AILearningAssistant();
+      const response = await assistant.processMessage(sessionId, message);
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Assistant message error:", error);
+      res.status(500).json({ message: "Failed to process message" });
+    }
+  });
+
+  app.get("/api/ai/assistant/sessions", authenticateToken, async (req: any, res) => {
+    try {
+      const { AILearningAssistant } = await import("./ai-learning-assistant");
+      const assistant = new AILearningAssistant();
+      const sessions = await assistant.getActiveSessions(req.user.id);
+      
+      res.json(sessions);
+    } catch (error) {
+      console.error("Get sessions error:", error);
+      res.status(500).json({ message: "Failed to get sessions" });
+    }
+  });
+
+  app.post("/api/ai/assistant/:sessionId/end", authenticateToken, async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      const { AILearningAssistant } = await import("./ai-learning-assistant");
+      const assistant = new AILearningAssistant();
+      await assistant.endSession(sessionId);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("End session error:", error);
+      res.status(500).json({ message: "Failed to end session" });
+    }
+  });
+
   // Collaboration Routes
   app.post("/api/collaboration/room", authenticateToken, async (req: any, res) => {
     try {

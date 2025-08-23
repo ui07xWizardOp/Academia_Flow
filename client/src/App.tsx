@@ -16,6 +16,7 @@ import Settings from "@/pages/settings";
 import AIInterview from "@/pages/ai-interview";
 import Collaboration from "@/pages/collaboration";
 import Analytics from "@/pages/analytics";
+import AIAssistant from "@/pages/ai-assistant";
 import { lazy } from "react";
 import StudentProfile from "@/pages/student-profile";
 import Submissions from "@/pages/submissions";
@@ -193,6 +194,11 @@ function Router() {
       <Route path="/predictive-analytics">
         <ProtectedRoute>
           <PredictiveAnalytics />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/app/ai-assistant">
+        <ProtectedRoute>
+          <AIAssistant />
         </ProtectedRoute>
       </Route>
       <Route component={NotFound} />

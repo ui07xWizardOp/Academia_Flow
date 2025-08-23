@@ -32,6 +32,7 @@ export interface IStorage {
   
   // Submission methods
   createSubmission(submission: InsertSubmission): Promise<Submission>;
+  getSubmission(id: number): Promise<Submission | undefined>;
   getUserSubmissions(userId: number): Promise<Submission[]>;
   getProblemSubmissions(problemId: number, userId: number): Promise<Submission[]>;
   
@@ -92,6 +93,11 @@ export class DatabaseStorage implements IStorage {
       .values(submission)
       .returning();
     return newSubmission;
+  }
+
+  async getSubmission(id: number): Promise<Submission | undefined> {
+    const [submission] = await db.select().from(submissions).where(eq(submissions.id, id));
+    return submission || undefined;
   }
 
   async getUserSubmissions(userId: number): Promise<Submission[]> {
