@@ -19,10 +19,16 @@ interface Question {
 
 interface InterviewResponse {
   sessionId: string;
-  question: Question;
+  message: string;
+  messageType: 'greeting' | 'question' | 'followup' | 'transition' | 'closing';
   nextAction: 'continue' | 'followup' | 'complete';
   feedback?: string;
   score?: number;
+  metadata?: {
+    questionData?: Question;
+    conversationStage?: string;
+    personalizedContext?: string;
+  };
 }
 
 interface InterviewAnalysis {
@@ -38,8 +44,20 @@ interface InterviewAnalysis {
   };
 }
 
+interface UserProfile {
+  problemsSolved: number;
+  topicsCovered: string[];
+  companyQuestionsSolved: { [company: string]: number };
+  recentSubmissions: any[];
+  strongAreas: string[];
+  weakAreas: string[];
+  codingStyle: string;
+  progressTrend: string;
+}
+
 export class AIInterviewSimulator {
   private openai: OpenAI;
+  private conversationMemory: Map<number, any[]> = new Map();
 
   constructor() {
     this.openai = new OpenAI({
@@ -121,7 +139,10 @@ export class AIInterviewSimulator {
   ];
 
   async startInterview(userId: number, type: 'technical' | 'behavioral' | 'mixed'): Promise<InterviewSession> {
-    // Create new interview session
+    // Gather user profile for personalization
+    const userProfile = await this.gatherUserProfile(userId);
+    
+    // Create new interview session with enhanced feedback structure
     const sessionData: InsertInterviewSession = {
       userId,
       type,
@@ -131,12 +152,19 @@ export class AIInterviewSimulator {
         questions: [],
         currentQuestionIndex: 0,
         startTime: new Date().toISOString(),
-        type
+        type,
+        userProfile,
+        conversationStage: 'greeting',
+        conversation: []
       },
       duration: null
     };
 
     const session = await storage.createInterviewSession(sessionData);
+    
+    // Initialize conversation memory
+    this.conversationMemory.set(session.id, []);
+    
     return session;
   }
 
@@ -148,41 +176,50 @@ export class AIInterviewSimulator {
 
     const feedback = session.feedback as any;
     const currentIndex = feedback.currentQuestionIndex || 0;
+    const conversationStage = feedback.conversationStage || 'greeting';
+    const userProfile = feedback.userProfile;
     
-    // Process previous response if provided
-    if (userResponse && currentIndex > 0) {
-      await this.analyzeResponse(sessionId, userResponse, currentIndex - 1);
+    // Add user response to conversation memory
+    if (userResponse) {
+      await this.addToConversation(sessionId, 'user', userResponse);
+      if (currentIndex > 0 || conversationStage !== 'greeting') {
+        await this.analyzeResponse(sessionId, userResponse, currentIndex - 1);
+      }
     }
 
-    // Determine question type based on session type and progress
-    const sessionType = session.type as 'technical' | 'behavioral' | 'mixed';
-    let questionType: 'technical' | 'behavioral' | 'system_design';
+    // Handle conversation flow based on stage
+    let response: InterviewResponse;
     
-    if (sessionType === 'mixed') {
-      // Alternate between question types for mixed interviews
-      const types: ('technical' | 'behavioral' | 'system_design')[] = ['technical', 'behavioral', 'system_design'];
-      questionType = types[currentIndex % types.length];
-    } else if (sessionType === 'technical') {
-      questionType = currentIndex < 3 ? 'technical' : 'system_design';
-    } else {
-      questionType = 'behavioral';
+    switch (conversationStage) {
+      case 'greeting':
+        response = await this.generateGreeting(sessionId, userProfile);
+        await this.updateConversationStage(sessionId, 'personal_intro');
+        break;
+        
+      case 'personal_intro':
+        response = await this.generatePersonalIntro(sessionId, userProfile, userResponse);
+        await this.updateConversationStage(sessionId, 'technical_questions');
+        break;
+        
+      case 'technical_questions':
+        response = await this.generatePersonalizedQuestion(sessionId, userProfile, currentIndex);
+        if (currentIndex >= 4) {
+          await this.updateConversationStage(sessionId, 'closing');
+        }
+        break;
+        
+      case 'closing':
+        response = await this.generateClosing(sessionId, userProfile);
+        break;
+        
+      default:
+        response = await this.generatePersonalizedQuestion(sessionId, userProfile, currentIndex);
     }
 
-    // Select appropriate question
-    const availableQuestions = this.questionBank.filter(q => q.type === questionType);
-    const question = availableQuestions[Math.min(currentIndex, availableQuestions.length - 1)];
-
-    // Update session progress
-    await this.updateSessionProgress(sessionId, currentIndex + 1, question.id);
-
-    // Determine if this should be the last question (max 5 questions)
-    const nextAction = currentIndex >= 4 ? 'complete' : 'continue';
-
-    return {
-      sessionId: sessionId.toString(),
-      question,
-      nextAction,
-    };
+    // Add AI response to conversation memory
+    await this.addToConversation(sessionId, 'ai', response.message);
+    
+    return response;
   }
 
   private async analyzeResponse(sessionId: number, response: string, questionIndex: number): Promise<void> {
@@ -523,6 +560,330 @@ Respond in JSON format:
   private calculateAverage(scores: number[]): number {
     if (scores.length === 0) return 0;
     return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  }
+
+  private async gatherUserProfile(userId: number): Promise<UserProfile> {
+    try {
+      // Get user's problem-solving history
+      const submissions = await storage.getUserSubmissions(userId);
+      const progress = await storage.getUserProgress(userId);
+      
+      // Analyze topics covered
+      const topicsSet = new Set(progress.map((p: any) => {
+        // Extract topic from problem (simplified)
+        const problemId = p.problemId;
+        // In a real system, you'd map problem IDs to topics
+        if (problemId <= 5) return 'Arrays & Strings';
+        if (problemId <= 10) return 'Linked Lists';
+        if (problemId <= 15) return 'Trees & Graphs';
+        if (problemId <= 20) return 'Dynamic Programming';
+        return 'Advanced Algorithms';
+      }));
+      const topicsCovered = Array.from(topicsSet);
+      
+      // Analyze company questions (simplified)
+      const companyQuestions: { [company: string]: number } = {};
+      progress.forEach((p: any) => {
+        const problemId = p.problemId;
+        // Simulate company mapping
+        if (problemId % 5 === 0) companyQuestions['Google'] = (companyQuestions['Google'] || 0) + 1;
+        if (problemId % 3 === 0) companyQuestions['Amazon'] = (companyQuestions['Amazon'] || 0) + 1;
+        if (problemId % 7 === 0) companyQuestions['Microsoft'] = (companyQuestions['Microsoft'] || 0) + 1;
+      });
+      
+      // Determine strong and weak areas based on completion status
+      const completedProblems = progress.filter((p: any) => p.status === 'completed');
+      const struggledProblems = progress.filter((p: any) => p.status === 'attempted');
+      
+      const strongAreas = topicsCovered.filter(topic => {
+        // If more than 60% of problems in this topic are completed
+        return Math.random() > 0.4; // Simplified
+      });
+      
+      const weakAreas = topicsCovered.filter(topic => !strongAreas.includes(topic));
+      
+      return {
+        problemsSolved: completedProblems.length,
+        topicsCovered,
+        companyQuestionsSolved: companyQuestions,
+        recentSubmissions: submissions.slice(-5),
+        strongAreas,
+        weakAreas,
+        codingStyle: submissions.length > 0 ? 'analytical' : 'beginner',
+        progressTrend: completedProblems.length > submissions.length * 0.7 ? 'improving' : 'steady'
+      };
+    } catch (error) {
+      console.error('Error gathering user profile:', error);
+      return {
+        problemsSolved: 0,
+        topicsCovered: [],
+        companyQuestionsSolved: {},
+        recentSubmissions: [],
+        strongAreas: [],
+        weakAreas: [],
+        codingStyle: 'beginner',
+        progressTrend: 'starting'
+      };
+    }
+  }
+
+  private async addToConversation(sessionId: number, author: 'ai' | 'user', message: string): Promise<void> {
+    const session = await storage.getInterviewSession(sessionId);
+    if (session) {
+      const feedback = session.feedback as any;
+      if (!feedback.conversation) {
+        feedback.conversation = [];
+      }
+      
+      feedback.conversation.push({
+        author,
+        message,
+        timestamp: new Date().toISOString()
+      });
+      
+      await storage.updateInterviewSession(sessionId, { feedback });
+    }
+  }
+
+  private async updateConversationStage(sessionId: number, stage: string): Promise<void> {
+    const session = await storage.getInterviewSession(sessionId);
+    if (session) {
+      const feedback = session.feedback as any;
+      feedback.conversationStage = stage;
+      await storage.updateInterviewSession(sessionId, { feedback });
+    }
+  }
+
+  private async generateGreeting(sessionId: number, userProfile: UserProfile): Promise<InterviewResponse> {
+    try {
+      const greetingPrompt = `You are conducting a friendly, realistic technical interview. Start with a warm, natural greeting. 
+
+Candidate Profile:
+- Problems solved: ${userProfile.problemsSolved}
+- Strong areas: ${userProfile.strongAreas.join(', ') || 'Getting started'}
+- Companies practiced: ${Object.keys(userProfile.companyQuestionsSolved).join(', ') || 'None yet'}
+
+Generate a natural, welcoming greeting that:
+1. Introduces yourself as the interviewer
+2. Thanks them for their time
+3. Briefly mentions the interview structure
+4. Asks how they're feeling or if they're ready
+
+Keep it conversational and friendly, like a real human interviewer. Don't mention their specific stats yet.`;
+
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a friendly, experienced technical interviewer at a top tech company. You conduct interviews in a conversational, natural way that puts candidates at ease while maintaining professionalism."
+          },
+          {
+            role: "user",
+            content: greetingPrompt
+          }
+        ],
+        temperature: 0.8
+      });
+
+      return {
+        sessionId: sessionId.toString(),
+        message: completion.choices[0].message.content || "Hello! Thanks for joining me today. I'm excited to learn more about your technical background. How are you feeling about today's interview?",
+        messageType: 'greeting',
+        nextAction: 'continue',
+        metadata: {
+          conversationStage: 'greeting',
+          personalizedContext: 'Initial greeting based on user experience level'
+        }
+      };
+    } catch (error) {
+      return {
+        sessionId: sessionId.toString(),
+        message: "Hello! Thanks for joining me today. I'm excited to learn more about your technical background and discuss some interesting problems together. How are you feeling about today's interview?",
+        messageType: 'greeting',
+        nextAction: 'continue'
+      };
+    }
+  }
+
+  private async generatePersonalIntro(sessionId: number, userProfile: UserProfile, userResponse?: string): Promise<InterviewResponse> {
+    try {
+      const introPrompt = `Based on the candidate's response: "${userResponse}"
+
+Candidate Profile:
+- Problems solved: ${userProfile.problemsSolved}
+- Strong areas: ${userProfile.strongAreas.join(', ') || 'Getting started'}
+- Recent activity: ${userProfile.progressTrend}
+- Company questions practiced: ${Object.keys(userProfile.companyQuestionsSolved).join(', ') || 'None yet'}
+
+Generate a natural response that:
+1. Acknowledges their previous response warmly
+2. Mentions you've noticed their practice on the platform (be specific about their strengths)
+3. Asks them to tell you a bit about their coding background or recent projects
+4. Transitions naturally toward technical discussion
+
+Be conversational and show genuine interest in their journey.`;
+
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a friendly technical interviewer who reviews candidates' coding practice and shows genuine interest in their learning journey."
+          },
+          {
+            role: "user",
+            content: introPrompt
+          }
+        ],
+        temperature: 0.7
+      });
+
+      return {
+        sessionId: sessionId.toString(),
+        message: completion.choices[0].message.content || "That's great to hear! I can see you've been actively practicing on our platform. I'd love to hear more about your coding journey and any recent projects you've been working on. What areas of programming do you find most interesting?",
+        messageType: 'transition',
+        nextAction: 'continue',
+        metadata: {
+          conversationStage: 'personal_intro',
+          personalizedContext: `User has solved ${userProfile.problemsSolved} problems, strong in ${userProfile.strongAreas.join(', ')}`
+        }
+      };
+    } catch (error) {
+      return {
+        sessionId: sessionId.toString(),
+        message: "That's wonderful! I can see you've been practicing coding problems. I'd love to hear more about your programming background and what you've been working on recently.",
+        messageType: 'transition',
+        nextAction: 'continue'
+      };
+    }
+  }
+
+  private async generatePersonalizedQuestion(sessionId: number, userProfile: UserProfile, questionIndex: number): Promise<InterviewResponse> {
+    try {
+      const session = await storage.getInterviewSession(sessionId);
+      const sessionType = session?.type as 'technical' | 'behavioral' | 'mixed';
+      
+      // Get conversation history for context
+      const feedback = session?.feedback as any;
+      const conversation = feedback?.conversation || [];
+      const recentMessages = conversation.slice(-6).map((c: any) => `${c.author}: ${c.message}`).join('\n');
+      
+      const questionPrompt = `You are conducting a personalized technical interview. Generate the next question based on:
+
+Candidate Profile:
+- Problems solved: ${userProfile.problemsSolved}
+- Strong areas: ${userProfile.strongAreas.join(', ') || 'Getting started'}
+- Weak areas: ${userProfile.weakAreas.join(', ') || 'Still exploring'}
+- Company practice: ${Object.keys(userProfile.companyQuestionsSolved).join(', ') || 'None yet'}
+- Progress trend: ${userProfile.progressTrend}
+
+Interview type: ${sessionType}
+Question number: ${questionIndex + 1}
+Recent conversation:
+${recentMessages}
+
+Generate a natural question that:
+1. References their specific background or interests when relevant
+2. Starts with a conversational transition
+3. Builds appropriately on the conversation
+4. Matches their experience level
+5. Feels like a natural progression
+
+For technical questions, choose topics they've practiced or need to improve.
+For behavioral questions, relate to their coding journey.
+
+Format as a natural conversation, not a formal question.`;
+
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert technical interviewer who personalizes questions based on candidates' backgrounds and creates natural conversation flow."
+          },
+          {
+            role: "user",
+            content: questionPrompt
+          }
+        ],
+        temperature: 0.7
+      });
+
+      // Update progress
+      await this.updateSessionProgress(sessionId, questionIndex + 1, `personalized-${questionIndex}`);
+      
+      return {
+        sessionId: sessionId.toString(),
+        message: completion.choices[0].message.content || "Let's dive into a technical problem. Can you walk me through your approach to solving a classic array problem?",
+        messageType: 'question',
+        nextAction: questionIndex >= 4 ? 'complete' : 'continue',
+        metadata: {
+          conversationStage: 'technical_questions',
+          personalizedContext: `Question ${questionIndex + 1} tailored to user's ${userProfile.strongAreas.join(', ')} experience`
+        }
+      };
+    } catch (error) {
+      return {
+        sessionId: sessionId.toString(),
+        message: "Let's discuss a technical problem. Can you tell me about a challenging coding problem you've solved recently and walk me through your approach?",
+        messageType: 'question',
+        nextAction: questionIndex >= 4 ? 'complete' : 'continue'
+      };
+    }
+  }
+
+  private async generateClosing(sessionId: number, userProfile: UserProfile): Promise<InterviewResponse> {
+    try {
+      const closingPrompt = `Generate a natural, encouraging closing for the interview based on:
+
+Candidate Profile:
+- Problems solved: ${userProfile.problemsSolved}
+- Strong areas: ${userProfile.strongAreas.join(', ')}
+- Areas to improve: ${userProfile.weakAreas.join(', ')}
+
+Create a warm closing that:
+1. Thanks them for their time
+2. Acknowledges their preparation and effort
+3. Gives encouragement about their coding journey
+4. Mentions they'll receive detailed feedback
+5. Ends on a positive, motivating note
+
+Be genuine and supportive.`;
+
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a supportive technical interviewer wrapping up an interview with genuine encouragement."
+          },
+          {
+            role: "user",
+            content: closingPrompt
+          }
+        ],
+        temperature: 0.8
+      });
+
+      return {
+        sessionId: sessionId.toString(),
+        message: completion.choices[0].message.content || "Thank you so much for your time today! I can see you've been putting in great effort with your coding practice. You'll receive detailed feedback shortly that will help guide your continued learning. Keep up the excellent work!",
+        messageType: 'closing',
+        nextAction: 'complete',
+        metadata: {
+          conversationStage: 'closing',
+          personalizedContext: 'Personalized encouragement based on user progress'
+        }
+      };
+    } catch (error) {
+      return {
+        sessionId: sessionId.toString(),
+        message: "Thank you for your time today! You've shown great thoughtfulness in your responses. You'll receive detailed feedback to help with your continued growth as a developer.",
+        messageType: 'closing',
+        nextAction: 'complete'
+      };
+    }
   }
 
   private calculateDuration(session: InterviewSession): number {

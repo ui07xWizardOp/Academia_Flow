@@ -33,12 +33,25 @@ interface Question {
   category: string;
 }
 
+interface AIMessage {
+  sessionId: string;
+  message: string;
+  messageType: 'greeting' | 'question' | 'followup' | 'transition' | 'closing';
+  nextAction: 'continue' | 'followup' | 'complete';
+  metadata?: {
+    questionData?: Question;
+    conversationStage?: string;
+    personalizedContext?: string;
+  };
+}
+
 interface InterviewMessage {
   id: string;
-  type: 'question' | 'response' | 'feedback';
+  type: 'message';
   content: string;
   timestamp: string;
   author: 'ai' | 'user';
+  messageType?: 'greeting' | 'question' | 'followup' | 'transition' | 'closing';
   metadata?: any;
 }
 
@@ -69,10 +82,11 @@ export default function AIInterview() {
   const [currentSession, setCurrentSession] = useState<number | null>(null);
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
   const [currentResponse, setCurrentResponse] = useState("");
-  const [questionNumber, setQuestionNumber] = useState(1);
+  const [conversationStage, setConversationStage] = useState('greeting');
   const [isCompleted, setIsCompleted] = useState(false);
   const [analysis, setAnalysis] = useState<InterviewAnalysis | null>(null);
   const [startTime] = useState(new Date());
+  const [isTyping, setIsTyping] = useState(false);
 
   // Start interview mutation
   const startInterviewMutation = useMutation({
@@ -82,10 +96,9 @@ export default function AIInterview() {
     },
     onSuccess: (session) => {
       setCurrentSession(session.id);
-      getFirstQuestion(session.id);
       toast({
         title: "Interview Started",
-        description: `Your ${interviewType} interview has begun. Take your time!`,
+        description: `Your personalized ${interviewType} interview is ready. The AI is analyzing your coding background...`,
       });
     },
     onError: () => {
@@ -97,37 +110,48 @@ export default function AIInterview() {
     }
   });
 
-  // Get next question mutation
-  const getQuestionMutation = useMutation({
+  // Get next message mutation
+  const getMessageMutation = useMutation({
     mutationFn: async ({ sessionId, userResponse }: { sessionId: number; userResponse?: string }) => {
+      setIsTyping(true);
       const response = await apiRequest("POST", `/api/interviews/ai/${sessionId}/question`, {
         userResponse
       });
       return response.json();
     },
-    onSuccess: (data) => {
-      // Add AI question to messages
-      const questionMessage: InterviewMessage = {
-        id: `q-${Date.now()}`,
-        type: 'question',
-        content: data.question.question,
+    onSuccess: (data: AIMessage) => {
+      setIsTyping(false);
+      
+      // Add AI message to conversation
+      const aiMessage: InterviewMessage = {
+        id: `ai-${Date.now()}`,
+        type: 'message',
+        content: data.message,
         timestamp: new Date().toISOString(),
         author: 'ai',
-        metadata: {
-          category: data.question.category,
-          difficulty: data.question.difficulty,
-          type: data.question.type
-        }
+        messageType: data.messageType,
+        metadata: data.metadata
       };
       
-      setMessages(prev => [...prev, questionMessage]);
+      setMessages(prev => [...prev, aiMessage]);
+      setConversationStage(data.metadata?.conversationStage || conversationStage);
 
       if (data.nextAction === 'complete') {
-        completeInterviewMutation.mutate({
-          sessionId: currentSession!,
-          finalResponse: currentResponse
-        });
+        setTimeout(() => {
+          completeInterviewMutation.mutate({
+            sessionId: currentSession!,
+            finalResponse: currentResponse
+          });
+        }, 2000); // Give user time to read the closing message
       }
+    },
+    onError: () => {
+      setIsTyping(false);
+      toast({
+        title: "Connection Issue",
+        description: "Let me try that again...",
+        variant: "destructive",
+      });
     }
   });
 
@@ -149,8 +173,8 @@ export default function AIInterview() {
     }
   });
 
-  const getFirstQuestion = (sessionId: number) => {
-    getQuestionMutation.mutate({ sessionId });
+  const getFirstMessage = (sessionId: number) => {
+    getMessageMutation.mutate({ sessionId });
   };
 
   const handleSubmitResponse = () => {
@@ -158,18 +182,17 @@ export default function AIInterview() {
 
     // Add user response to messages
     const responseMessage: InterviewMessage = {
-      id: `r-${Date.now()}`,
-      type: 'response',
+      id: `user-${Date.now()}`,
+      type: 'message',
       content: currentResponse,
       timestamp: new Date().toISOString(),
       author: 'user'
     };
 
     setMessages(prev => [...prev, responseMessage]);
-    setQuestionNumber(prev => prev + 1);
 
-    // Get next question
-    getQuestionMutation.mutate({
+    // Get next AI message
+    getMessageMutation.mutate({
       sessionId: currentSession,
       userResponse: currentResponse
     });
@@ -181,11 +204,18 @@ export default function AIInterview() {
   useEffect(() => {
     if (sessionId) {
       setCurrentSession(parseInt(sessionId));
-      getFirstQuestion(parseInt(sessionId));
+      getFirstMessage(parseInt(sessionId));
     } else {
       startInterviewMutation.mutate(interviewType);
     }
   }, []);
+
+  // Update first message when session starts
+  useEffect(() => {
+    if (currentSession && !sessionId) {
+      getFirstMessage(currentSession);
+    }
+  }, [currentSession]);
 
   const formatDuration = () => {
     const now = new Date();
@@ -373,12 +403,14 @@ export default function AIInterview() {
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">AI Mock Interview</h1>
                 <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <span>Question {questionNumber}/5</span>
+                  <span className="capitalize">{conversationStage.replace('_', ' ')}</span>
                   <span>•</span>
                   <div className="flex items-center space-x-1">
                     <Clock className="w-4 h-4" />
                     <span>{formatDuration()}</span>
                   </div>
+                  <span>•</span>
+                  <span>{messages.length} exchanges</span>
                 </div>
               </div>
             </div>
@@ -387,9 +419,28 @@ export default function AIInterview() {
             </Badge>
           </div>
           
-          {/* Progress Bar */}
+          {/* Conversation Progress */}
           <div className="mt-4">
-            <Progress value={(questionNumber / 5) * 100} className="w-full" />
+            <div className="flex items-center space-x-2 text-xs text-gray-500">
+              <div className={`w-2 h-2 rounded-full ${
+                conversationStage === 'greeting' ? 'bg-blue-500' : 'bg-gray-300'
+              }`}></div>
+              <span>Greeting</span>
+              <div className={`w-2 h-2 rounded-full ${
+                conversationStage === 'personal_intro' ? 'bg-blue-500' : 
+                ['technical_questions', 'closing'].includes(conversationStage) ? 'bg-green-500' : 'bg-gray-300'
+              }`}></div>
+              <span>Introduction</span>
+              <div className={`w-2 h-2 rounded-full ${
+                conversationStage === 'technical_questions' ? 'bg-blue-500' :
+                conversationStage === 'closing' ? 'bg-green-500' : 'bg-gray-300'
+              }`}></div>
+              <span>Discussion</span>
+              <div className={`w-2 h-2 rounded-full ${
+                conversationStage === 'closing' ? 'bg-blue-500' : 'bg-gray-300'
+              }`}></div>
+              <span>Wrap-up</span>
+            </div>
           </div>
         </div>
 
@@ -401,7 +452,8 @@ export default function AIInterview() {
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-2 text-gray-600">Starting your interview...</p>
+                  <p className="mt-2 text-gray-600">Setting up your personalized interview...</p>
+                  <p className="mt-1 text-sm text-gray-500">Analyzing your coding progress and preferences</p>
                 </div>
               </div>
             )}
@@ -477,11 +529,16 @@ export default function AIInterview() {
               <div className="flex space-x-4">
                 <div className="flex-1">
                   <Textarea
-                    placeholder="Type your response here... Take your time to think through your answer."
+                    placeholder={
+                      conversationStage === 'greeting' ? "Hi there! Feel free to share how you're feeling about the interview..." :
+                      conversationStage === 'personal_intro' ? "Tell me about your coding journey and what interests you..." :
+                      conversationStage === 'technical_questions' ? "Take your time to think through and explain your approach..." :
+                      "Share any final thoughts or questions you might have..."
+                    }
                     value={currentResponse}
                     onChange={(e) => setCurrentResponse(e.target.value)}
                     rows={3}
-                    className="resize-none"
+                    className="resize-none border-gray-200 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                         e.preventDefault();
@@ -498,11 +555,14 @@ export default function AIInterview() {
                 </div>
                 <Button
                   onClick={handleSubmitResponse}
-                  disabled={!currentResponse.trim() || getQuestionMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  disabled={!currentResponse.trim() || getMessageMutation.isPending || isTyping}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-all duration-200"
                 >
                   <Send className="w-4 h-4 mr-2" />
-                  Submit
+                  {conversationStage === 'greeting' ? 'Hi!' :
+                   conversationStage === 'personal_intro' ? 'Share' :
+                   conversationStage === 'technical_questions' ? 'Explain' :
+                   'Finish'}
                 </Button>
               </div>
             </div>
