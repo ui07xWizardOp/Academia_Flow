@@ -498,7 +498,7 @@ export default function AIInterview() {
               </div>
             ))}
 
-            {getQuestionMutation.isPending && (
+            {(getMessageMutation.isPending || isTyping) && (
               <div className="flex justify-start">
                 <div className="flex space-x-3">
                   <Avatar className="w-8 h-8">
@@ -506,15 +506,20 @@ export default function AIInterview() {
                       <Bot className="w-4 h-4" />
                     </AvatarFallback>
                   </Avatar>
-                  <Card className="bg-white">
+                  <Card className="bg-white border-blue-100">
                     <CardContent className="p-4">
                       <div className="flex items-center space-x-2">
-                        <div className="animate-pulse flex space-x-1">
-                          <div className="rounded-full bg-gray-400 h-2 w-2"></div>
-                          <div className="rounded-full bg-gray-400 h-2 w-2"></div>
-                          <div className="rounded-full bg-gray-400 h-2 w-2"></div>
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                         </div>
-                        <span className="text-sm text-gray-500">AI is thinking...</span>
+                        <span className="text-sm text-gray-500">
+                          {conversationStage === 'greeting' ? 'Getting ready to meet you...' :
+                           conversationStage === 'personal_intro' ? 'Thinking about your background...' :
+                           conversationStage === 'technical_questions' ? 'Preparing a personalized question...' :
+                           'Wrapping up thoughts...'}
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
