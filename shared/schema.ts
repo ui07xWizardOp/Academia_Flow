@@ -182,7 +182,7 @@ export const discussions = pgTable("discussions", {
   title: text("title").notNull(),
   content: text("content").notNull(),
   authorId: integer("author_id").references(() => users.id).notNull(),
-  parentId: integer("parent_id").references(() => discussions.id), // for replies
+  parentId: integer("parent_id"), // for replies - self-reference handled in relations
   upvotes: integer("upvotes").default(0),
   isPinned: boolean("is_pinned").default(false),
   isResolved: boolean("is_resolved").default(false),

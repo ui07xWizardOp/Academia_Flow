@@ -699,13 +699,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Submission IDs array required" });
       }
       
-      const submissions = await Promise.all(
-        submissionIds.map((id: number) => storage.getSubmission(id))
-      );
+      const submissionPromises = submissionIds.map((id: number) => storage.getSubmission(id));
+      const submissionResults = await Promise.all(submissionPromises);
+      const validSubmissions = submissionResults.filter((s): s is NonNullable<typeof s> => s !== undefined && s !== null);
       
       const problemMap = new Map();
-      for (const sub of submissions) {
-        if (sub && !problemMap.has(sub.problemId)) {
+      for (const sub of validSubmissions) {
+        if (!problemMap.has(sub.problemId)) {
           const problem = await storage.getProblem(sub.problemId);
           if (problem) problemMap.set(sub.problemId, problem);
         }
@@ -714,7 +714,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { AIAutomatedGrader } = await import("./ai-grading");
       const grader = new AIAutomatedGrader();
       const results = await grader.gradeBatch(
-        submissions.filter((s: any) => s !== undefined),
+        validSubmissions,
         problemMap,
         rubric
       );
