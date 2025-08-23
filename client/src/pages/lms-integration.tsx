@@ -23,7 +23,6 @@ import {
   Settings,
   Download,
   Upload,
-  Sync,
   Shield,
   Key,
   Globe,
@@ -281,7 +280,7 @@ export default function LMSIntegration() {
                                   <span>Last sync: {new Date(integration.lastSync).toLocaleDateString()}</span>
                                 </div>
                                 <div className="flex items-center space-x-2 text-sm">
-                                  <Sync className={`w-4 h-4 ${integration.syncEnabled ? 'text-green-500' : 'text-gray-400'}`} />
+                                  <RefreshCw className={`w-4 h-4 ${integration.syncEnabled ? 'text-green-500' : 'text-gray-400'}`} />
                                   <span>{integration.syncEnabled ? 'Auto sync on' : 'Auto sync off'}</span>
                                 </div>
                               </div>

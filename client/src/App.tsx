@@ -31,20 +31,18 @@ import AlumniNetwork from "@/pages/alumni-network";
 import Internships from "@/pages/internships";
 import SkillsAssessment from "@/pages/skills-assessment";
 import AdminUserManagement from "@/pages/admin-user-management";
+import CourseManagement from "@/pages/course-management";
+import AiContentGeneration from "@/pages/ai-content-generation";
+import AutomatedGrading from "@/pages/automated-grading";
+import IntelligentTutoring from "@/pages/intelligent-tutoring";
+import PredictiveAnalytics from "@/pages/predictive-analytics";
+import LmsIntegration from "@/pages/lms-integration";
+import InstitutionalAnalytics from "@/pages/institutional-analytics";
 
-// Lazy load Stage 3 enterprise components
-const CourseManagement = lazy(() => import("./pages/course-management"));
-const InstitutionalAnalytics = lazy(() => import("./pages/institutional-analytics"));
+// Lazy load additional components if needed
 const AdvancedAssessment = lazy(() => import("./pages/advanced-assessment"));
-const LMSIntegration = lazy(() => import("./pages/lms-integration"));
 const UserManagement = lazy(() => import("./pages/user-management"));
-
-// Lazy load Stage 4 AI components
-const AIContentGeneration = lazy(() => import("./pages/ai-content-generation"));
-const IntelligentTutoring = lazy(() => import("./pages/intelligent-tutoring"));
-const AutomatedGrading = lazy(() => import("./pages/automated-grading"));
 const SmartRecommendations = lazy(() => import("./pages/smart-recommendations"));
-const PredictiveAnalytics = lazy(() => import("./pages/predictive-analytics"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -172,6 +170,36 @@ function Router() {
           <InstitutionalAnalytics />
         </ProtectedRoute>
       </Route>
+      <Route path="/course-management">
+        <ProtectedRoute>
+          <CourseManagement />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/ai-content-generation">
+        <ProtectedRoute>
+          <AiContentGeneration />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/automated-grading">
+        <ProtectedRoute>
+          <AutomatedGrading />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/intelligent-tutoring">
+        <ProtectedRoute>
+          <IntelligentTutoring />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/predictive-analytics">
+        <ProtectedRoute>
+          <PredictiveAnalytics />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/lms-integration">
+        <ProtectedRoute>
+          <LmsIntegration />
+        </ProtectedRoute>
+      </Route>
       <Route path="/advanced-assessment">
         <ProtectedRoute>
           <AdvancedAssessment />
@@ -179,7 +207,7 @@ function Router() {
       </Route>
       <Route path="/lms-integration">
         <ProtectedRoute>
-          <LMSIntegration />
+          <LmsIntegration />
         </ProtectedRoute>
       </Route>
       <Route path="/user-management">
@@ -189,7 +217,7 @@ function Router() {
       </Route>
       <Route path="/ai-content-generation">
         <ProtectedRoute>
-          <AIContentGeneration />
+          <AiContentGeneration />
         </ProtectedRoute>
       </Route>
       <Route path="/intelligent-tutoring">
