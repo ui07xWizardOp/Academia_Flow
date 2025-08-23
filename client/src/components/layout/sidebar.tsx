@@ -59,12 +59,13 @@ const studentNavigation = [
 
 // Professor navigation
 const professorNavigation = [
-  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Dashboard", href: "/app", icon: Home },
   { name: "Course Management", href: "/course-management", icon: BookOpen },
   { name: "Advanced Assessment", href: "/advanced-assessment", icon: FileCheck },
   { name: "AI Content Generation", href: "/ai-content-generation", icon: Sparkles },
   { name: "Intelligent Tutoring", href: "/intelligent-tutoring", icon: Brain },
   { name: "Automated Grading", href: "/automated-grading", icon: Zap },
+  { name: "Smart Recommendations", href: "/smart-recommendations", icon: Target },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Collaboration", href: "/collaboration", icon: UserCheck },
   { name: "Accessibility", href: "/accessibility-settings", icon: Accessibility },
@@ -73,17 +74,11 @@ const professorNavigation = [
 // Admin navigation  
 const adminNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Institutional Analytics", href: "/institutional-analytics", icon: School },
-  { name: "LMS Integration", href: "/lms-integration", icon: Link2 },
   { name: "User Management", href: "/user-management", icon: Shield },
-  { name: "Course Management", href: "/course-management", icon: BookOpen },
-  { name: "Advanced Assessment", href: "/advanced-assessment", icon: FileCheck },
-  { name: "AI Content Generation", href: "/ai-content-generation", icon: Sparkles },
-  { name: "Intelligent Tutoring", href: "/intelligent-tutoring", icon: Brain },
-  { name: "Automated Grading", href: "/automated-grading", icon: Zap },
-  { name: "Smart Recommendations", href: "/smart-recommendations", icon: Target },
+  { name: "Institutional Analytics", href: "/institutional-analytics", icon: School },
   { name: "Predictive Analytics", href: "/predictive-analytics", icon: Brain },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "LMS Integration", href: "/lms-integration", icon: Link2 },
+  { name: "System Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Accessibility", href: "/accessibility-settings", icon: Accessibility },
 ];
 

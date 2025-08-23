@@ -112,6 +112,52 @@ function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function ProfessorProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect to="/login" />;
+  }
+
+  // Check if user has professor role
+  if (user?.role !== 'professor') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
+          <div className="text-yellow-500 mb-4">
+            <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Professor Access Required</h2>
+          <p className="text-gray-600 mb-6">This feature is only available to professors and instructors.</p>
+          <button 
+            onClick={() => window.location.href = '/app'}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function Router() {
   return (
     <Switch>
@@ -208,34 +254,29 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/course-management">
-        <ProtectedRoute>
+        <ProfessorProtectedRoute>
           <CourseManagement />
-        </ProtectedRoute>
+        </ProfessorProtectedRoute>
       </Route>
       <Route path="/institutional-analytics">
         <AdminProtectedRoute>
           <InstitutionalAnalytics />
         </AdminProtectedRoute>
       </Route>
-      <Route path="/course-management">
-        <ProtectedRoute>
-          <CourseManagement />
-        </ProtectedRoute>
-      </Route>
       <Route path="/ai-content-generation">
-        <ProtectedRoute>
+        <ProfessorProtectedRoute>
           <AiContentGeneration />
-        </ProtectedRoute>
+        </ProfessorProtectedRoute>
       </Route>
       <Route path="/automated-grading">
-        <ProtectedRoute>
+        <ProfessorProtectedRoute>
           <AutomatedGrading />
-        </ProtectedRoute>
+        </ProfessorProtectedRoute>
       </Route>
       <Route path="/intelligent-tutoring">
-        <ProtectedRoute>
+        <ProfessorProtectedRoute>
           <IntelligentTutoring />
-        </ProtectedRoute>
+        </ProfessorProtectedRoute>
       </Route>
       <Route path="/predictive-analytics">
         <AdminProtectedRoute>
@@ -248,9 +289,9 @@ function Router() {
         </AdminProtectedRoute>
       </Route>
       <Route path="/advanced-assessment">
-        <ProtectedRoute>
+        <ProfessorProtectedRoute>
           <AdvancedAssessment />
-        </ProtectedRoute>
+        </ProfessorProtectedRoute>
       </Route>
       <Route path="/accessibility-settings">
         <ProtectedRoute>
@@ -263,9 +304,9 @@ function Router() {
         </AdminProtectedRoute>
       </Route>
       <Route path="/smart-recommendations">
-        <ProtectedRoute>
+        <ProfessorProtectedRoute>
           <SmartRecommendations />
-        </ProtectedRoute>
+        </ProfessorProtectedRoute>
       </Route>
       <Route path="/app/ai-assistant">
         <ProtectedRoute>
