@@ -477,7 +477,13 @@ Respond in JSON format:
 }`;
 
       if (!this.openai) {
-        return this.provideFallbackFollowup(sessionId, userAnswer);
+        // Return a simple fallback followup
+        return {
+          sessionId: session?.id?.toString() || '',
+          message: "That's an interesting approach! Can you tell me more about your thought process?",
+          messageType: 'followup' as const,
+          nextAction: 'continue' as const
+        };
       }
       
       const completion = await this.openai.chat.completions.create({
@@ -827,7 +833,7 @@ For behavioral questions, relate to their coding journey.
 Format as a natural conversation, not a formal question.`;
 
       if (!this.openai) {
-        const nextQuestion = this.getNextQuestion(session?.feedback as any);
+        const nextQuestion = await this.getNextQuestion(session?.feedback as any);
         return {
           sessionId: sessionId.toString(),
           message: `Great! Let's move on to the next question: ${nextQuestion.question}`,

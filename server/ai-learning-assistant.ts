@@ -183,7 +183,7 @@ export class AILearningAssistant {
     const name = user?.name || "there";
     const level = context.userLevel;
     
-    const greetings = {
+    const greetings: Record<string, string> = {
       beginner: `Hi ${name}! I'm your AI learning assistant. I'm here to help you master programming concepts, solve problems, and prepare for technical interviews. What would you like to work on today?`,
       intermediate: `Welcome back, ${name}! Ready to tackle some challenging problems? I can help you with algorithms, debugging, or explain complex concepts. What's on your mind?`,
       advanced: `Hello ${name}! Great to see you continuing your journey. Whether you need help with advanced algorithms, system design, or interview prep, I'm here to assist. What challenge are you facing today?`

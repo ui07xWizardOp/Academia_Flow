@@ -106,7 +106,7 @@ export class IntelligentTutor {
       };
     }
     
-    const response = await openai.chat.completions.create({
+    const response = await openai!.chat.completions.create({
       model: this.model,
       messages: [
         {
@@ -241,11 +241,11 @@ This should take approximately ${breakdown.estimatedTime} to cover thoroughly, b
 
     const systemPrompt = this.buildSystemPrompt(intent, breakdown, currentSubtopicIndex);
 
-    const response = await openai.chat.completions.create({
+    const response = await openai!.chat.completions.create({
       model: this.model,
       messages: [
         { role: "system", content: systemPrompt },
-        ...recentHistory,
+        ...recentHistory as any,
         { role: "user", content: userMessage }
       ],
       temperature: 0.7,
