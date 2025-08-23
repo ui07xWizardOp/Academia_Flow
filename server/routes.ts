@@ -326,6 +326,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Intelligent Tutoring System Routes
+  app.post("/api/tutoring/start", authenticateToken, async (req: any, res) => {
+    try {
+      const { topic } = req.body;
+      if (!topic) {
+        return res.status(400).json({ message: "Topic is required" });
+      }
+      
+      const { intelligentTutor } = await import("./intelligent-tutor");
+      const result = await intelligentTutor.startTutoringSession(req.user.id, topic);
+      res.json(result);
+    } catch (error) {
+      console.error("Tutoring start error:", error);
+      res.status(500).json({ message: "Failed to start tutoring session" });
+    }
+  });
+
+  app.post("/api/tutoring/:sessionId/message", authenticateToken, async (req: any, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const { message } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+      
+      const { intelligentTutor } = await import("./intelligent-tutor");
+      const response = await intelligentTutor.continueSession(sessionId, message);
+      res.json(response);
+    } catch (error) {
+      console.error("Tutoring message error:", error);
+      res.status(500).json({ message: "Failed to process message" });
+    }
+  });
+
+  app.get("/api/tutoring/sessions", authenticateToken, async (req: any, res) => {
+    try {
+      const { intelligentTutor } = await import("./intelligent-tutor");
+      const sessions = await intelligentTutor.getUserSessions(req.user.id);
+      res.json(sessions);
+    } catch (error) {
+      console.error("Tutoring sessions error:", error);
+      res.status(500).json({ message: "Failed to fetch sessions" });
+    }
+  });
+
+  app.get("/api/tutoring/:sessionId/messages", authenticateToken, async (req: any, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const { intelligentTutor } = await import("./intelligent-tutor");
+      const messages = await intelligentTutor.getSessionMessages(sessionId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Tutoring messages error:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/tutoring/:sessionId/complete", authenticateToken, async (req: any, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const { feedback } = req.body;
+      
+      const { intelligentTutor } = await import("./intelligent-tutor");
+      await intelligentTutor.completeSession(sessionId, feedback);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Tutoring complete error:", error);
+      res.status(500).json({ message: "Failed to complete session" });
+    }
+  });
+
   // AI Interview System Routes
   app.post("/api/interviews/ai/start", authenticateToken, async (req: any, res) => {
     try {

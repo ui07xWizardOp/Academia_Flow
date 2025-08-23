@@ -120,6 +120,52 @@ export const interviewSessionsRelations = relations(interviewSessions, ({ one })
   }),
 }));
 
+// AI Interview Tables
+export const aiInterviewSessions = pgTable("ai_interview_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  type: varchar("type", { length: 20 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull(),
+  score: integer("score"),
+  feedback: jsonb("feedback"),
+  duration: integer("duration"),
+  userContext: jsonb("user_context"),
+  conversationStage: text("conversation_stage"),
+  startedAt: timestamp("started_at").default(sql`now()`).notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const aiInterviewMessages = pgTable("ai_interview_messages", {
+  id: serial("id").primaryKey(),
+  sessionId: integer("session_id").references(() => aiInterviewSessions.id).notNull(),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  metadata: jsonb("metadata"),
+  timestamp: timestamp("timestamp").default(sql`now()`).notNull(),
+});
+
+// Intelligent Tutoring Tables
+export const intelligentTutoringSessions = pgTable("intelligent_tutoring_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  topic: text("topic").notNull(),
+  topicBreakdown: jsonb("topic_breakdown"),
+  currentSubtopic: integer("current_subtopic").default(0),
+  status: text("status").notNull().default("active"),
+  startedAt: timestamp("started_at").default(sql`now()`).notNull(),
+  completedAt: timestamp("completed_at"),
+  feedback: text("feedback")
+});
+
+export const intelligentTutoringMessages = pgTable("intelligent_tutoring_messages", {
+  id: serial("id").primaryKey(),
+  sessionId: integer("session_id").references(() => intelligentTutoringSessions.id).notNull(),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  metadata: jsonb("metadata"),
+  timestamp: timestamp("timestamp").default(sql`now()`).notNull()
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
