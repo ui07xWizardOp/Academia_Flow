@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
+import AdminDashboard from "@/pages/admin-dashboard";
 import Problems from "@/pages/problems";
 import CodeEditor from "@/pages/code-editor";
 import ProgressPage from "@/pages/progress";
@@ -29,6 +30,7 @@ import CareerEvents from "@/pages/career-events";
 import AlumniNetwork from "@/pages/alumni-network";
 import Internships from "@/pages/internships";
 import SkillsAssessment from "@/pages/skills-assessment";
+import AdminUserManagement from "@/pages/admin-user-management";
 
 // Lazy load Stage 3 enterprise components
 const CourseManagement = lazy(() => import("./pages/course-management"));
@@ -115,9 +117,14 @@ function Router() {
         </ProtectedRoute>
       </Route>
       {/* Keep old routes for backward compatibility */}
+      <Route path="/admin">
+        <ProtectedRoute>
+          <AdminDashboard />
+        </ProtectedRoute>
+      </Route>
       <Route path="/dashboard">
         <ProtectedRoute>
-          <Redirect to="/app" />
+          <AdminDashboard />
         </ProtectedRoute>
       </Route>
       <Route path="/problems">
@@ -177,7 +184,7 @@ function Router() {
       </Route>
       <Route path="/user-management">
         <ProtectedRoute>
-          <UserManagement />
+          <AdminUserManagement />
         </ProtectedRoute>
       </Route>
       <Route path="/ai-content-generation">
