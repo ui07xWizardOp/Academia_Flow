@@ -120,7 +120,7 @@ export class IndeedIntegration {
   }
 
   private extractRequirements(description: string): string[] {
-    const requirements = [];
+    const requirements: string[] = [];
     const patterns = [
       /\d+\+?\s*years?\s+(?:of\s+)?experience/gi,
       /bachelor'?s?\s+degree/gi,
@@ -523,9 +523,8 @@ export class JobAggregatorService {
   async trackApplication(userId: number, jobId: string, status: string): Promise<void> {
     await storage.createJobApplication({
       userId,
-      jobListingId: parseInt(jobId),
-      status,
-      appliedAt: new Date()
+      jobId: parseInt(jobId),
+      status
     });
   }
 
@@ -640,4 +639,3 @@ router.get('/api/jobs/salary', async (req, res) => {
 });
 
 export default router;
-export { JobAggregatorService, IndeedIntegration, LinkedInIntegration, GlassdoorIntegration };

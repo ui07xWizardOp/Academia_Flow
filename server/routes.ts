@@ -7,6 +7,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { insertUserSchema, insertSubmissionSchema, insertInterviewSessionSchema } from "@shared/schema";
 import careerRoutes from "./career-routes";
+import lmsRoutes from "./lms-integrations";
+import jobRoutes from "./job-integrations";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
@@ -820,13 +822,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Routes
+  const adminRoutes = await import("./admin-routes");
+  app.use(adminRoutes.default);
+  
   // Career Services Routes
   app.use("/api/career", careerRoutes);
+  
+  // LMS Integration Routes
+  app.use(lmsRoutes);
+  
+  // Job Board Integration Routes
+  app.use(jobRoutes);
+  
+  // Course Management Routes
+  const courseRoutes = await import("./course-management");
+  app.use(courseRoutes.default);
+  
+  // Alumni and Mentorship Routes
+  const alumniRoutes = await import("./alumni-mentorship");
+  app.use(alumniRoutes.default);
+  
+  // Skills Assessment Routes
+  const skillsRoutes = await import("./skills-assessment");
+  app.use(skillsRoutes.default);
+  
+  // Institutional Analytics Routes
+  const analyticsRoutes = await import("./institutional-analytics");
+  app.use(analyticsRoutes.default);
+  
+  // Predictive Analytics Routes
+  const { predictiveAnalytics } = await import("./predictive-analytics");
+  
+  app.get("/api/ai/student-predictions", authenticateToken, async (req: any, res) => {
+    try {
+      const predictions = await predictiveAnalytics.predictStudentPerformance(req.user.id);
+      res.json(predictions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get predictions" });
+    }
+  });
+  
+  app.get("/api/ai/course-analytics", authenticateToken, async (req: any, res) => {
+    try {
+      const courseId = parseInt(req.query.courseId || '1');
+      const analytics = await predictiveAnalytics.analyzeCourse(courseId);
+      res.json(analytics);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get course analytics" });
+    }
+  });
+  
+  app.get("/api/ai/system-insights", authenticateToken, async (req: any, res) => {
+    try {
+      const insights = await predictiveAnalytics.generateInstitutionalInsights();
+      res.json(insights);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get system insights" });
+    }
+  });
+  
+  app.get("/api/ai/early-warnings", authenticateToken, async (req: any, res) => {
+    try {
+      const warnings = await predictiveAnalytics.generateEarlyWarnings();
+      res.json(warnings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get early warnings" });
+    }
+  });
+  
+  app.get("/api/ai/adaptive-learning-path/:userId", authenticateToken, async (req: any, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const path = await predictiveAnalytics.generateAdaptiveLearningPath(userId);
+      res.json(path);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate learning path" });
+    }
+  });
 
   const httpServer = createServer(app);
   
   // Initialize real-time collaboration
   initializeCollaboration(httpServer);
+  
+  // Initialize advanced collaboration features
+  const { initializeAdvancedCollaboration } = await import("./advanced-collaboration");
+  initializeAdvancedCollaboration(httpServer);
+  
+  // Advanced Collaboration Routes
+  const advancedCollabRoutes = await import("./advanced-collaboration");
+  app.use(advancedCollabRoutes.default);
   
   return httpServer;
 }

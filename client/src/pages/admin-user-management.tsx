@@ -76,44 +76,6 @@ export default function AdminUserManagement() {
   // Fetch users
   const { data: usersData = { users: [], total: 0 }, isLoading } = useQuery({
     queryKey: ['/api/admin/users', currentPage, searchQuery, roleFilter, statusFilter],
-    queryFn: async () => {
-      // Mock data for demonstration
-      const mockUsers: User[] = Array.from({ length: 50 }, (_, i) => ({
-        id: i + 1,
-        username: `user${i + 1}`,
-        email: `user${i + 1}@university.edu`,
-        name: `User ${i + 1}`,
-        role: i % 20 === 0 ? 'admin' : i % 10 === 0 ? 'professor' : 'student',
-        status: i % 15 === 0 ? 'suspended' : i % 8 === 0 ? 'inactive' : 'active',
-        department: ['Computer Science', 'Engineering', 'Mathematics', 'Physics'][i % 4],
-        createdAt: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
-        lastLogin: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-        coursesEnrolled: Math.floor(Math.random() * 8) + 1,
-        submissionCount: Math.floor(Math.random() * 100),
-      }));
-
-      // Apply filters
-      let filtered = mockUsers;
-      if (searchQuery) {
-        filtered = filtered.filter(u => 
-          u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          u.username.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }
-      if (roleFilter !== "all") {
-        filtered = filtered.filter(u => u.role === roleFilter);
-      }
-      if (statusFilter !== "all") {
-        filtered = filtered.filter(u => u.status === statusFilter);
-      }
-
-      // Paginate
-      const start = (currentPage - 1) * itemsPerPage;
-      const paginatedUsers = filtered.slice(start, start + itemsPerPage);
-
-      return { users: paginatedUsers, total: filtered.length };
-    },
   });
 
   // User statistics

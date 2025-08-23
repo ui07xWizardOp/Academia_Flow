@@ -126,9 +126,13 @@ export class PredictiveAnalyticsEngine {
   private cacheExpiry = 3600000; // 1 hour
 
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (apiKey) {
+      this.openai = new OpenAI({ apiKey });
+    } else {
+      console.warn('[PredictiveAnalytics] OpenAI API key not configured - using fallback mode');
+      this.openai = null as any;
+    }
   }
 
   // Student Performance Prediction

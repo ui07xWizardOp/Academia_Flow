@@ -26,6 +26,10 @@ import {
   skillsAssessments,
   careerPaths,
   careerResources,
+  aiInterviewSessions,
+  aiInterviewMessages,
+  intelligentTutoringSessions,
+  intelligentTutoringMessages,
   type User, 
   type InsertUser,
   type Problem,
@@ -792,10 +796,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Career Services - Job Applications Implementation
-  async createJobApplication(application: InsertJobApplication): Promise<JobApplication> {
+  async createJobApplication(application: any): Promise<JobApplication> {
+    const appData = {
+      userId: application.userId,
+      jobId: application.jobId || application.jobListingId || 1,
+      status: application.status || 'applied',
+      appliedAt: application.appliedAt || new Date()
+    };
     const [newApplication] = await db
       .insert(jobApplications)
-      .values(application)
+      .values(appData)
       .returning();
     return newApplication;
   }
@@ -1060,6 +1070,428 @@ export class DatabaseStorage implements IStorage {
       { name: 'Node.js', level: 'Intermediate' },
       { name: 'Python', level: 'Intermediate' }
     ];
+  }
+
+  // Course Management Implementation
+  async getAllCourses(): Promise<Course[]> {
+    return await db.select().from(courses).orderBy(courses.name);
+  }
+
+  async getCourse(id: number): Promise<Course | undefined> {
+    const [course] = await db.select().from(courses).where(eq(courses.id, id));
+    return course || undefined;
+  }
+
+  async createCourse(course: InsertCourse): Promise<Course> {
+    const [newCourse] = await db.insert(courses).values(course).returning();
+    return newCourse;
+  }
+
+  async updateCourse(id: number, updates: Partial<InsertCourse>): Promise<Course> {
+    const [updated] = await db.update(courses).set(updates).where(eq(courses.id, id)).returning();
+    return updated;
+  }
+
+  async deleteCourse(id: number): Promise<void> {
+    await db.delete(courses).where(eq(courses.id, id));
+  }
+
+  async getCourseEnrollments(courseId: number): Promise<Enrollment[]> {
+    return await db.select().from(enrollments).where(eq(enrollments.courseId, courseId));
+  }
+
+  async getUserEnrollments(userId: number): Promise<Enrollment[]> {
+    return await db.select().from(enrollments).where(eq(enrollments.studentId, userId));
+  }
+
+  async createEnrollment(enrollment: InsertEnrollment): Promise<Enrollment> {
+    const [newEnrollment] = await db.insert(enrollments).values(enrollment).returning();
+    return newEnrollment;
+  }
+
+  async updateEnrollment(id: number, updates: Partial<InsertEnrollment>): Promise<Enrollment> {
+    const [updated] = await db.update(enrollments).set(updates).where(eq(enrollments.id, id)).returning();
+    return updated;
+  }
+
+  async deleteEnrollment(id: number): Promise<void> {
+    await db.delete(enrollments).where(eq(enrollments.id, id));
+  }
+
+  async getCourseAssignments(courseId: number): Promise<Assignment[]> {
+    return await db.select().from(assignments).where(eq(assignments.courseId, courseId));
+  }
+
+  async getAssignment(id: number): Promise<Assignment | undefined> {
+    const [assignment] = await db.select().from(assignments).where(eq(assignments.id, id));
+    return assignment || undefined;
+  }
+
+  async createAssignment(assignment: InsertAssignment): Promise<Assignment> {
+    const [newAssignment] = await db.insert(assignments).values(assignment).returning();
+    return newAssignment;
+  }
+
+  async updateAssignment(id: number, updates: Partial<InsertAssignment>): Promise<Assignment> {
+    const [updated] = await db.update(assignments).set(updates).where(eq(assignments.id, id)).returning();
+    return updated;
+  }
+
+  async deleteAssignment(id: number): Promise<void> {
+    await db.delete(assignments).where(eq(assignments.id, id));
+  }
+
+  async getAssignmentSubmissions(assignmentId: number): Promise<AssignmentSubmission[]> {
+    return await db.select().from(assignmentSubmissions).where(eq(assignmentSubmissions.assignmentId, assignmentId));
+  }
+
+  async submitAssignment(submission: InsertAssignmentSubmission): Promise<AssignmentSubmission> {
+    const [newSubmission] = await db.insert(assignmentSubmissions).values(submission).returning();
+    return newSubmission;
+  }
+
+  async getCourseLectures(courseId: number): Promise<Lecture[]> {
+    return await db.select().from(lectures).where(eq(lectures.courseId, courseId));
+  }
+
+  async getLecture(id: number): Promise<Lecture | undefined> {
+    const [lecture] = await db.select().from(lectures).where(eq(lectures.id, id));
+    return lecture || undefined;
+  }
+
+  async createLecture(lecture: InsertLecture): Promise<Lecture> {
+    const [newLecture] = await db.insert(lectures).values(lecture).returning();
+    return newLecture;
+  }
+
+  async updateLecture(id: number, updates: Partial<InsertLecture>): Promise<Lecture> {
+    const [updated] = await db.update(lectures).set(updates).where(eq(lectures.id, id)).returning();
+    return updated;
+  }
+
+  async deleteLecture(id: number): Promise<void> {
+    await db.delete(lectures).where(eq(lectures.id, id));
+  }
+
+  async getCourseAnnouncements(courseId: number): Promise<Announcement[]> {
+    return await db.select().from(announcements).where(eq(announcements.courseId, courseId));
+  }
+
+  async getAnnouncement(id: number): Promise<Announcement | undefined> {
+    const [announcement] = await db.select().from(announcements).where(eq(announcements.id, id));
+    return announcement || undefined;
+  }
+
+  async createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement> {
+    const [newAnnouncement] = await db.insert(announcements).values(announcement).returning();
+    return newAnnouncement;
+  }
+
+  async updateAnnouncement(id: number, updates: Partial<InsertAnnouncement>): Promise<Announcement> {
+    const [updated] = await db.update(announcements).set(updates).where(eq(announcements.id, id)).returning();
+    return updated;
+  }
+
+  async deleteAnnouncement(id: number): Promise<void> {
+    await db.delete(announcements).where(eq(announcements.id, id));
+  }
+
+  async getCourseGrades(courseId: number): Promise<Grade[]> {
+    return await db.select().from(grades).where(eq(grades.courseId, courseId));
+  }
+
+  async getStudentGrades(studentId: number): Promise<Grade[]> {
+    return await db.select().from(grades).where(eq(grades.studentId, studentId));
+  }
+
+  async createGrade(grade: InsertGrade): Promise<Grade> {
+    const [newGrade] = await db.insert(grades).values(grade).returning();
+    return newGrade;
+  }
+
+  async updateGrade(id: number, updates: Partial<InsertGrade>): Promise<Grade> {
+    const [updated] = await db.update(grades).set(updates).where(eq(grades.id, id)).returning();
+    return updated;
+  }
+
+  async getCourseAttendance(courseId: number): Promise<Attendance[]> {
+    return await db.select().from(attendance).where(eq(attendance.courseId, courseId));
+  }
+
+  async getStudentAttendance(studentId: number): Promise<Attendance[]> {
+    return await db.select().from(attendance).where(eq(attendance.studentId, studentId));
+  }
+
+  async recordAttendance(record: InsertAttendance): Promise<Attendance> {
+    const [newRecord] = await db.insert(attendance).values(record).returning();
+    return newRecord;
+  }
+
+  async updateAttendance(id: number, updates: Partial<InsertAttendance>): Promise<Attendance> {
+    const [updated] = await db.update(attendance).set(updates).where(eq(attendance.id, id)).returning();
+    return updated;
+  }
+
+  async getCourseDiscussions(courseId: number): Promise<Discussion[]> {
+    return await db.select().from(discussions).where(eq(discussions.courseId, courseId));
+  }
+
+  async getDiscussion(id: number): Promise<Discussion | undefined> {
+    const [discussion] = await db.select().from(discussions).where(eq(discussions.id, id));
+    return discussion || undefined;
+  }
+
+  async createDiscussion(discussion: InsertDiscussion): Promise<Discussion> {
+    const [newDiscussion] = await db.insert(discussions).values(discussion).returning();
+    return newDiscussion;
+  }
+
+  async updateDiscussion(id: number, updates: Partial<InsertDiscussion>): Promise<Discussion> {
+    const [updated] = await db.update(discussions).set(updates).where(eq(discussions.id, id)).returning();
+    return updated;
+  }
+
+  async deleteDiscussion(id: number): Promise<void> {
+    await db.delete(discussions).where(eq(discussions.id, id));
+  }
+
+  async getCourseModules(courseId: number): Promise<any[]> {
+    // Modules would be implemented as a combination of lectures, assignments, etc.
+    const [courseLectures, courseAssignments] = await Promise.all([
+      this.getCourseLectures(courseId),
+      this.getCourseAssignments(courseId)
+    ]);
+    return [
+      ...courseLectures.map(l => ({ type: 'lecture', ...l })),
+      ...courseAssignments.map(a => ({ type: 'assignment', ...a }))
+    ];
+  }
+
+  async createCourseModule(module: any): Promise<any> {
+    if (module.type === 'lecture') {
+      return await this.createLecture(module);
+    } else if (module.type === 'assignment') {
+      return await this.createAssignment(module);
+    }
+    throw new Error('Invalid module type');
+  }
+
+  async updateCourseModule(id: number, updates: any): Promise<any> {
+    if (updates.type === 'lecture') {
+      return await this.updateLecture(id, updates);
+    } else if (updates.type === 'assignment') {
+      return await this.updateAssignment(id, updates);
+    }
+    throw new Error('Invalid module type');
+  }
+
+  async deleteCourseModule(id: number): Promise<void> {
+    // Try to delete as both lecture and assignment
+    try {
+      await this.deleteLecture(id);
+    } catch {
+      await this.deleteAssignment(id);
+    }
+  }
+
+  async getCourseSubmissions(courseId: number): Promise<any[]> {
+    const courseAssignments = await this.getCourseAssignments(courseId);
+    const allSubmissions = [];
+    for (const assignment of courseAssignments) {
+      const submissions = await this.getAssignmentSubmissions(assignment.id);
+      allSubmissions.push(...submissions);
+    }
+    return allSubmissions;
+  }
+
+  async getUserTutoringSessions(userId: number): Promise<any[]> {
+    // Using intelligent tutoring sessions
+    return await db.select().from(intelligentTutoringSessions).where(eq(intelligentTutoringSessions.userId, userId));
+  }
+
+  // Alumni Network Implementation
+  async getAllAlumni(): Promise<AlumniProfile[]> {
+    return await db.select().from(alumniProfiles).orderBy(alumniProfiles.graduationYear);
+  }
+
+  async getAlumniProfile(id: number): Promise<AlumniProfile | undefined> {
+    const [profile] = await db.select().from(alumniProfiles).where(eq(alumniProfiles.id, id));
+    return profile || undefined;
+  }
+
+  async createAlumniProfile(profile: InsertAlumniProfile): Promise<AlumniProfile> {
+    const [newProfile] = await db.insert(alumniProfiles).values(profile).returning();
+    return newProfile;
+  }
+
+  async updateAlumniProfile(id: number, updates: Partial<InsertAlumniProfile>): Promise<AlumniProfile> {
+    const [updated] = await db.update(alumniProfiles).set(updates).where(eq(alumniProfiles.id, id)).returning();
+    return updated;
+  }
+
+  async findMentorshipMatches(userId: number): Promise<AlumniProfile[]> {
+    // Simple matching based on willingness to mentor
+    return await db.select().from(alumniProfiles).where(eq(alumniProfiles.willingToMentor, true));
+  }
+
+  async createMentorshipRequest(request: InsertMentorshipRequest): Promise<MentorshipRequest> {
+    const [newRequest] = await db.insert(mentorshipRequests).values(request).returning();
+    return newRequest;
+  }
+
+  async getMentorRequests(mentorId: number): Promise<MentorshipRequest[]> {
+    return await db.select().from(mentorshipRequests).where(eq(mentorshipRequests.mentorId, mentorId));
+  }
+
+  async getMenteeRequests(menteeId: number): Promise<MentorshipRequest[]> {
+    return await db.select().from(mentorshipRequests).where(eq(mentorshipRequests.menteeId, menteeId));
+  }
+
+  async updateMentorshipRequest(id: number, updates: Partial<InsertMentorshipRequest>): Promise<MentorshipRequest> {
+    const [updated] = await db.update(mentorshipRequests).set(updates).where(eq(mentorshipRequests.id, id)).returning();
+    return updated;
+  }
+
+  async getAlumniEvents(): Promise<CareerEvent[]> {
+    return await db.select().from(careerEvents).where(eq(careerEvents.type, 'alumni')).orderBy(careerEvents.date);
+  }
+
+  async createAlumniEvent(event: InsertCareerEvent): Promise<CareerEvent> {
+    const [newEvent] = await db.insert(careerEvents).values({ ...event, type: 'alumni' }).returning();
+    return newEvent;
+  }
+
+  async getSuccessStories(): Promise<any[]> {
+    // Success stories could be stored in a general content table or alumni profiles
+    return await db.select().from(alumniProfiles).where(eq(alumniProfiles.successStory, true));
+  }
+
+  async createSuccessStory(story: any): Promise<any> {
+    // Store as alumni profile with success story flag
+    return await this.createAlumniProfile({ ...story, successStory: true });
+  }
+
+  async getUserConnections(userId: number): Promise<any[]> {
+    // Get user's alumni connections
+    const mentorships = await db.select().from(mentorshipRequests)
+      .where(or(
+        eq(mentorshipRequests.mentorId, userId),
+        eq(mentorshipRequests.menteeId, userId)
+      ));
+    return mentorships;
+  }
+
+  async getSuggestedConnections(userId: number): Promise<AlumniProfile[]> {
+    // Suggest alumni not yet connected
+    const connected = await this.getUserConnections(userId);
+    const connectedIds = connected.map((c: any) => c.mentorId === userId ? c.menteeId : c.mentorId);
+    
+    return await db.select().from(alumniProfiles)
+      .where(and(
+        ne(alumniProfiles.userId, userId),
+        notInArray(alumniProfiles.userId, connectedIds.length > 0 ? connectedIds : [0])
+      ))
+      .limit(10);
+  }
+
+  async createConnection(userId: number, targetUserId: number): Promise<any> {
+    return await this.createMentorshipRequest({
+      mentorId: targetUserId,
+      menteeId: userId,
+      status: 'connected',
+      message: 'Connection request'
+    });
+  }
+
+  // Skills Assessment Implementation
+  async getAvailableAssessments(): Promise<any[]> {
+    return await db.select().from(skillsAssessments)
+      .where(eq(skillsAssessments.isPublic, true))
+      .orderBy(skillsAssessments.skill);
+  }
+
+  async createSkillsAssessment(assessment: InsertSkillsAssessment): Promise<SkillsAssessment> {
+    const [newAssessment] = await db.insert(skillsAssessments).values(assessment).returning();
+    return newAssessment;
+  }
+
+  async getSkillsAssessment(id: number): Promise<SkillsAssessment | undefined> {
+    const [assessment] = await db.select().from(skillsAssessments).where(eq(skillsAssessments.id, id));
+    return assessment || undefined;
+  }
+
+  async updateSkillsAssessment(id: number, updates: Partial<InsertSkillsAssessment>): Promise<SkillsAssessment> {
+    const [updated] = await db.update(skillsAssessments).set(updates).where(eq(skillsAssessments.id, id)).returning();
+    return updated;
+  }
+
+  async getUserSkillsAssessments(userId: number): Promise<SkillsAssessment[]> {
+    return await db.select().from(skillsAssessments).where(eq(skillsAssessments.userId, userId));
+  }
+
+  async getUserSkills(userId: number): Promise<any[]> {
+    // Get user's completed skill assessments
+    const assessments = await this.getUserSkillsAssessments(userId);
+    return assessments.filter((a: any) => a.passed).map((a: any) => ({
+      name: a.skill,
+      level: a.score > 80 ? 'advanced' : a.score > 60 ? 'intermediate' : 'beginner'
+    }));
+  }
+
+  async getUserProfile(userId: number): Promise<any> {
+    const user = await this.getUser(userId);
+    const [alumni] = await db.select().from(alumniProfiles).where(eq(alumniProfiles.userId, userId));
+    return { ...user, ...alumni, desiredRole: alumni?.desiredRole || 'Software Engineer' };
+  }
+
+  async getRoleRequirements(role: string): Promise<any[]> {
+    // Return standard requirements for common roles
+    const requirements: Record<string, any[]> = {
+      'Software Engineer': [
+        { skill: 'JavaScript', level: 3, priority: 5 },
+        { skill: 'Python', level: 3, priority: 4 },
+        { skill: 'SQL', level: 2, priority: 3 },
+        { skill: 'Git', level: 3, priority: 5 },
+        { skill: 'Data Structures', level: 3, priority: 5 }
+      ],
+      'Data Scientist': [
+        { skill: 'Python', level: 4, priority: 5 },
+        { skill: 'SQL', level: 3, priority: 4 },
+        { skill: 'Machine Learning', level: 3, priority: 5 },
+        { skill: 'Statistics', level: 4, priority: 5 },
+        { skill: 'Data Visualization', level: 3, priority: 3 }
+      ],
+      'DevOps Engineer': [
+        { skill: 'Docker', level: 4, priority: 5 },
+        { skill: 'Kubernetes', level: 3, priority: 4 },
+        { skill: 'CI/CD', level: 4, priority: 5 },
+        { skill: 'Cloud Services', level: 3, priority: 4 },
+        { skill: 'Scripting', level: 3, priority: 3 }
+      ]
+    };
+    return requirements[role] || requirements['Software Engineer'];
+  }
+
+  async getUserCertificates(userId: number): Promise<any[]> {
+    // Get passed assessments as certificates
+    const assessments = await this.getUserSkillsAssessments(userId);
+    return assessments.filter((a: any) => a.passed).map((a: any) => ({
+      certificateId: `CERT-${userId}-${a.id}`,
+      userId,
+      skill: a.skill,
+      level: a.level,
+      score: a.score,
+      issuedDate: a.completedAt,
+      validUntil: new Date(a.completedAt ? new Date(a.completedAt).getTime() + 365 * 24 * 60 * 60 * 1000 : Date.now())
+    }));
+  }
+
+  async getAllDiscussions(): Promise<Discussion[]> {
+    return await db.select().from(discussions).orderBy(desc(discussions.createdAt));
+  }
+
+  async getUserDiscussions(userId: number): Promise<Discussion[]> {
+    return await db.select().from(discussions).where(eq(discussions.userId, userId));
   }
 
   // Career Services - Alumni Network Implementation

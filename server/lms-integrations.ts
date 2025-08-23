@@ -1011,4 +1011,3 @@ router.post('/api/lms/sync-all', async (req, res) => {
 });
 
 export default router;
-export { LMSIntegrationManager, CanvasIntegration, BlackboardIntegration, MoodleIntegration, GoogleClassroomIntegration };
