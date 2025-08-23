@@ -65,7 +65,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
     } catch (error) {
-      res.status(400).json({ message: "Invalid input data" });
+      console.error("Registration error:", error);
+      res.status(400).json({ 
+        message: "Invalid input data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
 
